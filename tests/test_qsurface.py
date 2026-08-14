@@ -528,6 +528,18 @@ class TestRendering(unittest.TestCase):
         self.assertEqual(render.fmt("**bold**"), "<strong>bold</strong>")
         self.assertEqual(render.fmt("*em*"), "<em>em</em>")
 
+    def test_close_on_submit_offered_when_served(self):
+        spec = spec_mod.validate(minimal())
+        served = render.render(spec)
+        self.assertIn('id="closeOnSubmit"', served)
+        self.assertIn("Close this tab when I submit", served)
+
+    def test_close_on_submit_absent_from_a_standalone_preview(self):
+        # A standalone render has no server to submit to, so the control would
+        # promise something it cannot do.
+        spec = spec_mod.validate(minimal())
+        self.assertNotIn('id="closeOnSubmit"', render.render(spec, standalone=True))
+
     def test_conditions_reach_the_client_bootstrap(self):
         spec = spec_mod.validate(
             minimal(

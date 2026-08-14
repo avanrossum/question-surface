@@ -157,7 +157,9 @@ def main() -> int:
                        "unknown": False, "notes": "", "reordered": True},
         "confidence": {"value": 4, "unknown": False, "notes": ""},
     }
-    html = render.render(spec, draft=draft, standalone=True, respondent="Alex")
+    # Rendered as served, not standalone, so the shot matches what a
+    # respondent actually sees — including the close-on-submit control.
+    html = render.render(spec, draft=draft, respondent="Alex")
 
     shot(chrome, html, "form-light.png", "1440,1250", theme="light")
     shot(chrome, html, "form-dark.png", "1440,1250", theme="dark")
@@ -199,7 +201,7 @@ def main() -> int:
     )
     shot(
         chrome,
-        render.render(follow, standalone=True, respondent="Alex", prior=prior),
+        render.render(follow, respondent="Alex", prior=prior),
         "follow-up.png",
         "1440,980",
         theme="light",

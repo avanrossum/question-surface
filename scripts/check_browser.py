@@ -64,6 +64,13 @@ SPEC = {
                     "prompt": "Order these",
                     "options": ["a", "b", "c"],
                 },
+                # Deliberately never answered by the harness.
+                {
+                    "id": "must-answer",
+                    "type": "text",
+                    "prompt": "Required, and left blank on purpose",
+                    "required": True,
+                },
             ],
         }
     ],
@@ -109,10 +116,29 @@ HARNESS = """
     log("notes_residue", q("branch-radio").querySelector(".qs-notes").value === "");
     log("text_residue", q("branch-text").querySelector(".text-input").value === "");
 
-    // Required-but-blank blocks submission.
+    // A blank required question blocks submission and is pointed at.
     pick("gate", "build");
     document.getElementById("submitBtn").click();
-    log("submitted_with_blanks", !document.getElementById("result").hidden);
+    var panel = document.getElementById("result");
+    log("blank_required_blocks", !panel.hidden &&
+      /required/i.test(panel.textContent) && /blank/i.test(panel.textContent));
+    log("blank_required_marked", q("must-answer").classList.contains("missing"));
+    log("blank_required_not_submitted",
+      document.getElementById("submitBtn").textContent === "Submit answers");
+
+    // Close-on-submit ships off, and remembers the choice when it can.
+    var toggle = document.getElementById("closeOnSubmit");
+    log("close_toggle_present", !!toggle);
+    log("close_toggle_default_off", toggle && toggle.checked === false);
+    var storage = true;
+    try { localStorage.setItem("qsurface:probe", "1"); localStorage.removeItem("qsurface:probe"); }
+    catch (e) { storage = false; }
+    log("storage_available", storage);
+    if (toggle && storage) {
+      toggle.checked = true;
+      toggle.dispatchEvent(new Event("change", { bubbles: true }));
+      log("close_toggle_persists", localStorage.getItem("qsurface:close-on-submit") === "1");
+    }
   } catch (err) {
     log("harness_error", String(err && err.message || err));
   }
@@ -135,7 +161,20 @@ EXPECTED = {
     "unknown_residue": ("false", "a re-shown branch has no stale unknown flag"),
     "notes_residue": ("true", "a re-shown branch has no stale notes"),
     "text_residue": ("true", "a re-shown branch has no stale text"),
-    "submitted_with_blanks": ("true", "a blank required question blocks submit"),
+    "blank_required_blocks": ("true", "a blank required question blocks submit"),
+    "blank_required_marked": ("true", "the blocking question is marked on the page"),
+    "blank_required_not_submitted": ("true", "the submit button stays ready to retry"),
+    "close_toggle_present": ("true", "close-on-submit is offered on a served form"),
+    "close_toggle_default_off": ("true", "close-on-submit ships off"),
+}
+
+# Only meaningful where the browser allows storage for the page's origin.
+CONDITIONAL = {
+    "close_toggle_persists": (
+        "storage_available",
+        "true",
+        "close-on-submit remembers the choice",
+    ),
 }
 
 
@@ -153,7 +192,10 @@ def main() -> int:
 
     print(f"browser  {chrome}")
     validated = spec_mod.validate(json.loads(json.dumps(SPEC)))
-    html = render.render(validated, standalone=True)
+    # Rendered as if served, so the close-on-submit control is present. The
+    # page's fetches fail with no server behind them, which the app already
+    # handles and none of these checks reach.
+    html = render.render(validated)
 
     with tempfile.TemporaryDirectory() as tmp:
         results = browser.drive(html, HARNESS, Path(tmp), chrome=chrome)
@@ -166,7 +208,22 @@ def main() -> int:
         return 1
 
     failures = 0
+    ran = 0
     for key, (expected, description) in EXPECTED.items():
+        actual = results.get(key)
+        ran += 1
+        if actual == expected:
+            print(f"  ok    {description}")
+        else:
+            failures += 1
+            print(f"  FAIL  {description}")
+            print(f"        {key}: expected {expected!r}, got {actual!r}")
+
+    for key, (guard, expected, description) in CONDITIONAL.items():
+        if results.get(guard) != "true":
+            print(f"  skip  {description} ({guard} is false here)")
+            continue
+        ran += 1
         actual = results.get(key)
         if actual == expected:
             print(f"  ok    {description}")
@@ -177,9 +234,9 @@ def main() -> int:
 
     print()
     if failures:
-        print(f"{failures} of {len(EXPECTED)} client-side checks failed")
+        print(f"{failures} of {ran} client-side checks failed")
         return 1
-    print(f"{len(EXPECTED)} client-side checks passed")
+    print(f"{ran} client-side checks passed")
     return 0
 
 

@@ -179,9 +179,15 @@ These are load-bearing and not up for negotiation in a PR:
 
 ```bash
 python3 -m unittest discover -s tests -t .   # 60 tests, under a second
-python3 scripts/check_browser.py             # 12 client-side checks in a real browser
+python3 scripts/check_browser.py             # 17 client-side checks in a real browser
 ```
 
 The browser checks cover `assets/app.js`, which the Python suite cannot reach — both bugs found in the first review lived there. They drive headless Chrome if one is installed and skip cleanly if not, rather than pulling in a JavaScript toolchain and breaking the no-build-step constraint. CI runs the suite on Python 3.9 through 3.13 and the browser checks with `--require`.
+
+## Licence
+
+MIT. See [LICENSE](LICENSE).
+
+---
 
 Screenshots in this README are generated from the real renderer by `scripts/make_screenshots.py`, so they cannot drift from what the tool looks like.

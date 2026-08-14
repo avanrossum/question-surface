@@ -4,6 +4,21 @@ Semver. Newest first. The tool carries its own version because questionnaires au
 
 ---
 
+## 1.2.0 — 2026-08-14
+
+### Added
+
+- **Close-on-submit.** A checkbox in the submit bar, off by default, that closes the tab once the answers are recorded. The choice is remembered across questionnaires since it is a preference about how someone works. Browsers only permit a page to close a tab a script opened, so when the browser refuses, the success panel says so instead of leaving the respondent waiting for a tab that will never disappear.
+- **MIT licence.**
+
+### Fixed
+
+- **A client-side check was passing for the wrong reason.** `submitted_with_blanks` claimed to prove that a blank required question blocks submission, but the harness had answered every required question by that point, so what it actually observed was the standalone preview panel appearing. Replaced with three checks that leave a required question blank on purpose and assert the submission is blocked, the offending question is marked, and the button stays ready to retry. 17 client-side checks, up from 12.
+
+### Changed
+
+- README screenshots are rendered as served rather than standalone, so they show what a respondent actually sees.
+
 ## 1.1.0 — 2026-08-14
 
 Makes the tool installable and global: any agent that can run a shell command can now ask a batch of questions from any project. Shape decided by the `ship-design` and `naming` questionnaires, whose responses are tracked under `.question-surface/responses/`.

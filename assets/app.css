@@ -390,6 +390,19 @@ code {
 
 .submit-summary { font-size: 13px; color: var(--text-2); }
 .submit-actions { display: flex; gap: 8px; }
+.submit-left { display: flex; flex-direction: column; gap: 6px; min-width: 0; }
+
+.close-toggle {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  font-size: 12.5px;
+  color: var(--text-3);
+  cursor: pointer;
+  user-select: none;
+}
+.close-toggle input { margin: 0; cursor: pointer; }
+.close-toggle:hover { color: var(--text-2); }
 
 .btn {
   font: inherit;

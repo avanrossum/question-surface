@@ -82,6 +82,16 @@ def render(
 
     prior_html = _prior(prior)
 
+    # Pointless in a standalone preview, which has no server to submit to.
+    close_toggle = (
+        ""
+        if standalone
+        else """<label class="close-toggle">
+          <input type="checkbox" id="closeOnSubmit">
+          <span>Close this tab when I submit</span>
+        </label>"""
+    )
+
     return f"""<!doctype html>
 <html lang="en">
 <head>
@@ -123,7 +133,10 @@ def render(
     <form id="qform">{sections_html}</form>
 
     <div class="submit-bar">
-      <div class="submit-summary" id="submitSummary"></div>
+      <div class="submit-left">
+        <div class="submit-summary" id="submitSummary"></div>
+        {close_toggle}
+      </div>
       <div class="submit-actions">
         <button type="button" class="btn btn-ghost" id="saveDraft">Save draft</button>
         <button type="button" class="btn btn-primary" id="submitBtn">Submit answers</button>

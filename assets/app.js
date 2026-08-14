@@ -19,6 +19,23 @@
   var saveDraftBtn = document.getElementById("saveDraft");
   var draftState = document.getElementById("draftState");
   var result = document.getElementById("result");
+  var closeToggle = document.getElementById("closeOnSubmit");
+
+  /* Whether to close the tab on submit is a preference about how the person
+     works, not about this questionnaire, so it is stored globally rather than
+     per-id. It ships off; once turned on it stays on, and the box is visible
+     on every form so it is never a surprise. */
+  var CLOSE_KEY = "qsurface:close-on-submit";
+  if (closeToggle) {
+    try {
+      closeToggle.checked = localStorage.getItem(CLOSE_KEY) === "1";
+    } catch (err) { /* private browsing */ }
+    closeToggle.addEventListener("change", function () {
+      try {
+        localStorage.setItem(CLOSE_KEY, closeToggle.checked ? "1" : "0");
+      } catch (err) { /* private browsing */ }
+    });
+  }
 
   function entry(qid) {
     if (!state[qid]) state[qid] = { value: null, unknown: false, notes: "" };
@@ -405,15 +422,33 @@
       try { localStorage.removeItem(STORAGE_KEY); } catch (err) {}
       show("ok", "<h2>Answers recorded</h2><p>Written to:</p><p><code>" +
         escapeHtml(data.json) + "</code><br><code>" + escapeHtml(data.markdown) +
-        "</code></p><p>You can close this tab — the terminal has the path.</p>");
+        "</code></p><p>You can close this tab — the terminal has the path.</p>" +
+        "<p id=\"closeBlocked\" hidden>Your browser would not let the page close " +
+        "itself, which it only permits for tabs a script opened. Close it " +
+        "yourself and the answers are still saved.</p>");
       submitBtn.textContent = "Submitted";
       document.querySelector(".submit-actions").style.opacity = ".5";
+      if (closeToggle && closeToggle.checked) closeTab();
     }).catch(function (err) {
       submitBtn.disabled = false;
       submitBtn.textContent = "Submit answers";
       show("error", "<h2>Submit failed</h2><p>" + escapeHtml(String(err)) +
         "</p><p>Your draft is saved — retry, or copy the JSON from the terminal.</p>");
     });
+  }
+
+  /* Browsers refuse window.close() for a tab a script did not open, and refuse
+     it silently. The server is told either way — the answers are already
+     written — so the only thing left is to stop the respondent waiting for a
+     tab that is never going to disappear. */
+  function closeTab() {
+    setTimeout(function () {
+      window.close();
+      setTimeout(function () {
+        var blocked = document.getElementById("closeBlocked");
+        if (blocked) blocked.hidden = false;
+      }, 500);
+    }, 200);
   }
 
   function show(kind, html) {
