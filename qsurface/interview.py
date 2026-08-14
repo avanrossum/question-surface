@@ -31,7 +31,7 @@ from datetime import datetime, timezone
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from pathlib import Path
 
-from . import paths, store
+from . import paths, render, store
 
 # How long a browser long-poll hangs before returning empty and being retried.
 # Short enough that a dead server is noticed, long enough not to spin.
@@ -109,10 +109,14 @@ def transcript_markdown(session: dict) -> str:
             lines += [f"*{exchange['why']}*", ""]
         if exchange.get("skipped"):
             lines += ["> Skipped.", ""]
-        elif exchange.get("answer"):
-            lines += [exchange["answer"], ""]
         else:
-            lines += ["> No answer recorded.", ""]
+            picked = exchange.get("selected") or []
+            if picked:
+                lines += ["**" + "** · **".join(picked) + "**", ""]
+            if exchange.get("answer"):
+                lines += [exchange["answer"], ""]
+            elif not picked:
+                lines += ["> No answer recorded.", ""]
     return "\n".join(lines)
 
 
@@ -170,7 +174,14 @@ class Session:
             if self.closed:
                 return None
             self.seq += 1
-            question = dict(question, seq=self.seq, asked_at=now_iso())
+            question = dict(
+                question,
+                seq=self.seq,
+                asked_at=now_iso(),
+                # Formatted once here rather than in the browser: the subset is
+                # escaped server-side, so the page never renders raw input.
+                context_html=render.rich(question.get("context") or ""),
+            )
             self.pending = question
             self.touch()
             self.cond.notify_all()
@@ -198,12 +209,16 @@ class Session:
                     return None
                 self.cond.wait(timeout=remaining if remaining else 1.0)
 
-    def answer(self, seq: int, text: str, skipped: bool) -> bool:
+    def answer(
+        self, seq: int, text: str, skipped: bool, selected: list | None = None
+    ) -> bool:
         with self.cond:
             if not self.pending or self.pending["seq"] != seq:
                 return False
             exchange = dict(self.pending)
+            exchange.pop("context_html", None)   # regenerable from `context`
             exchange["answer"] = text.strip()
+            exchange["selected"] = [str(s) for s in (selected or [])]
             exchange["skipped"] = bool(skipped)
             exchange["answered_at"] = now_iso()
             self.record["exchanges"].append(exchange)
@@ -303,10 +318,12 @@ def serve(record: dict) -> None:
 
             if route == "/answer":
                 session.touch()
+                picked = payload.get("selected")
                 ok = session.answer(
                     int(payload.get("seq") or 0),
                     str(payload.get("answer") or ""),
                     bool(payload.get("skipped")),
+                    picked if isinstance(picked, list) else [],
                 )
                 self._json(200 if ok else 409, {"ok": ok})
                 return

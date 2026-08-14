@@ -4,6 +4,26 @@ Semver. Newest first. The tool carries its own version because questionnaires au
 
 ---
 
+## 1.4.0 — 2026-08-14
+
+### Added
+
+- **`qsurface interview distill`** — scaffolds a questionnaire from a finished interview transcript. Each answered exchange becomes an `info` block holding what was asked and what was said, followed by a draft question marked `TODO`, and the spec declares `follows: <interview-id>` so serving it renders the interview above the questions. `--only` selects exchanges. The tool cannot tell which parts of a conversation became decisions, so it carries all of them across and marks them rather than guessing.
+- **Interview options are a selection, not text.** `--option` chips now toggle and are recorded in `selected` alongside the typed answer, rather than pasting their label into the answer box where the choice is lost the moment the sentence around it is edited. A selection alone counts as an answer.
+- **`--context` and `--context-file` on `interview ask`** — reasoning behind a question, shown in a block clamped to about four lines with a "Read more" toggle. Renders a small markdown subset: paragraphs, bullets, pipe tables, and inline formatting, all escaped before any markup is applied.
+- **`follows` understands an interview transcript**, so a distilled questionnaire shows the conversation it came from.
+
+### Fixed
+
+- **A closing summary could appear once per answer.** `send()` started a second poll loop while the first was still running, so every answer forked another, and each fork called `finish()` when the interview closed. One loop is now enforced, `finish()` is idempotent, and a check asserts the summary appears exactly once.
+- **The "Read more" toggle never appeared.** Whether the context overflows was measured while the card was still `display:none`, where both heights read zero and the content always looks like it fits.
+- **The context clamp did nothing.** It used `-webkit-line-clamp`, which only counts inline text and is inert once the block holds a table or a list — which is most of the time, since that is what the block is for. Clamped by height instead, with a fade.
+- **`render.rich` could hang on a pipe row with no divider under it**, which matched no block rule and left the cursor unmoved. Found by the test written for it.
+
+### Notes
+
+- Two of the new checks replaced ones that were passing without proving anything: the context clamp was asserted by class name rather than by measuring, and the summary count included a static paragraph. 94 Python tests, 41 client-side checks.
+
 ## 1.3.2 — 2026-08-14
 
 ### Fixed

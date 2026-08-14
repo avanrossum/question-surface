@@ -23,7 +23,9 @@ qsurface interview list                          # what is open
 | `--prompt` | The question. Required. |
 | `--why` | What the agent is digging for, shown under the question. |
 | `--placeholder` | Placeholder text in the answer box. |
-| `--option` | A suggested answer, offered as a chip. Repeatable. |
+| `--option` | A selectable answer, offered as a chip. Repeatable. Recorded separately from the typed answer, so a selection survives the sentence being edited. |
+| `--context` | Reasoning behind the question, shown in a collapsed block. Paragraphs, `-` bullets, pipe tables, and inline formatting. |
+| `--context-file` | Read the context from a file, for anything long. |
 | `--timeout MINUTES` | How long to wait. Defaults to the `timeout_minutes` setting. |
 | `--text` | Print the answer text only, rather than JSON. |
 
@@ -66,6 +68,20 @@ Deliberately not the Web Speech API, which in Chrome sends audio to a recognitio
 
 ---
 
+## Turning an interview into a questionnaire
+
+```bash
+qsurface interview distill <interview-id> [--out <id>] [--only 2,4,5] [--force]
+```
+
+An interview ends with material that has become precise enough to decide. `distill` writes a questionnaire scaffold from the transcript rather than making the agent retype it:
+
+- Each selected exchange becomes an `info` block holding what was asked and what was said, followed by a draft question marked `TODO`.
+- The spec declares `follows: <interview-id>`, so serving it renders the interview above the questions.
+- `--only` selects exchange numbers; the default is every answered one.
+
+**Every question it writes is a draft.** The tool cannot tell which parts of a conversation became decisions, so it carries all of them across and marks them rather than guessing. The agent rewrites what is a real fork, deletes what is settled, and adds the options and their costs before serving it.
+
 ## The transcript
 
 Written after **every** answer, not only at close, so an interview interrupted halfway still leaves everything said so far. It lands beside questionnaire responses in `.question-surface/responses/<id>/`.
@@ -85,6 +101,8 @@ Written after **every** answer, not only at close, so an interview interrupted h
       "prompt": "Picture one specific person landing on this repo…",
       "why": "Everything downstream depends on this.",
       "answer": "…",
+      "selected": ["Reliability"],
+      "context": "…as passed to --context, unrendered",
       "asked_at": "2026-08-14T20:54:09Z",
       "answered_at": "2026-08-14T21:00:55Z",
       "skipped": false

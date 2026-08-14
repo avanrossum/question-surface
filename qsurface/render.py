@@ -36,6 +36,88 @@ def fmt(text: str) -> str:
     return out.replace("\n\n", "<br><br>").replace("\n", "<br>")
 
 
+_DIVIDER_CELL = re.compile(r"^:?-{2,}:?$")
+
+
+def rich(text: str) -> str:
+    """A small block-level markdown subset for agent-written context.
+
+    `fmt` handles one line of inline formatting, which is enough for a prompt
+    and not enough for a briefing. Context blocks carry the reasoning an agent
+    would otherwise put in a chat message, and that reasoning is frequently a
+    comparison table or a list. Supported: paragraphs, `-`/`*` bullets, and
+    pipe tables. Everything goes through `fmt` first, so it is escaped before
+    any markup is added.
+    """
+    lines = (text or "").replace("\r\n", "\n").split("\n")
+    blocks: list[str] = []
+    index = 0
+
+    def is_row(line: str) -> bool:
+        stripped = line.strip()
+        return stripped.startswith("|") and stripped.endswith("|") and len(stripped) > 1
+
+    def cells(line: str) -> list[str]:
+        return [cell.strip() for cell in line.strip().strip("|").split("|")]
+
+    def is_bullet(line: str) -> bool:
+        return line.lstrip().startswith(("- ", "* "))
+
+    while index < len(lines):
+        line = lines[index]
+        if not line.strip():
+            index += 1
+            continue
+
+        if (
+            is_row(line)
+            and index + 1 < len(lines)
+            and is_row(lines[index + 1])
+            and all(_DIVIDER_CELL.match(c) for c in cells(lines[index + 1]) if c)
+        ):
+            header = cells(line)
+            index += 2
+            body = []
+            while index < len(lines) and is_row(lines[index]):
+                body.append(cells(lines[index]))
+                index += 1
+            head = "".join(f"<th>{fmt(c)}</th>" for c in header)
+            rows = "".join(
+                "<tr>" + "".join(f"<td>{fmt(c)}</td>" for c in row) + "</tr>"
+                for row in body
+            )
+            blocks.append(
+                f'<table class="ctx-table"><thead><tr>{head}</tr></thead>'
+                f"<tbody>{rows}</tbody></table>"
+            )
+            continue
+
+        if is_bullet(line):
+            items = []
+            while index < len(lines) and is_bullet(lines[index]):
+                items.append(fmt(lines[index].lstrip()[2:]))
+                index += 1
+            blocks.append("<ul>" + "".join(f"<li>{i}</li>" for i in items) + "</ul>")
+            continue
+
+        # Consume the first line unconditionally. A pipe row with no divider
+        # under it matches no block above and is not a paragraph start either,
+        # so testing before consuming leaves the cursor where it was and spins.
+        para = [lines[index]]
+        index += 1
+        while (
+            index < len(lines)
+            and lines[index].strip()
+            and not is_row(lines[index])
+            and not is_bullet(lines[index])
+        ):
+            para.append(lines[index])
+            index += 1
+        blocks.append("<p>" + fmt("\n".join(para)) + "</p>")
+
+    return "".join(blocks)
+
+
 def _asset(name: str) -> str:
     path = ASSETS / name
     return path.read_text(encoding="utf-8") if path.exists() else ""
@@ -201,6 +283,11 @@ def interview_page(record: dict) -> str:
       <div class="iv-seq" id="ivSeq"></div>
       <div class="iv-prompt" id="ivPrompt"></div>
       <div class="iv-why" id="ivWhy" hidden></div>
+      <div class="iv-context" id="ivContext" hidden>
+        <div class="iv-context-head">Additional context</div>
+        <div class="iv-context-body is-clamped" id="ivContextBody"></div>
+        <button type="button" class="iv-context-more" id="ivContextMore" hidden>Read more</button>
+      </div>
       <div class="iv-chips" id="ivChips" hidden></div>
       <textarea class="iv-answer" id="ivAnswer" rows="6"></textarea>
       <div class="iv-dictate" id="ivDictate" hidden>
@@ -271,18 +358,35 @@ def _prior(prior: dict | None) -> str:
     tool exists to remove. Skipped and unanswered entries are left out — only
     what was actually decided is worth restating.
     """
-    if not prior or not prior.get("answers"):
+    if not prior:
         return ""
 
     rows = []
-    for entry in prior["answers"].values():
-        if entry.get("skipped") or entry.get("value") in (None, "", []):
-            if not entry.get("unknown"):
+    if prior.get("kind") == "interview":
+        # A distilled questionnaire follows the interview it came from, so the
+        # respondent can see what they already said rather than recalling it.
+        for exchange in prior.get("exchanges", []):
+            if exchange.get("skipped"):
                 continue
-        rows.append(
-            f'<div class="prior-row"><div class="prior-q">{fmt(entry["prompt"])}</div>'
-            f'<div class="prior-a">{fmt(store.format_value(entry))}</div></div>'
-        )
+            said = " · ".join(exchange.get("selected") or [])
+            if exchange.get("answer"):
+                said = f"{said} — {exchange['answer']}" if said else exchange["answer"]
+            if not said:
+                continue
+            rows.append(
+                f'<div class="prior-row"><div class="prior-q">'
+                f'{fmt(exchange["prompt"])}</div>'
+                f'<div class="prior-a">{fmt(said)}</div></div>'
+            )
+    else:
+        for entry in prior.get("answers", {}).values():
+            if entry.get("skipped") or entry.get("value") in (None, "", []):
+                if not entry.get("unknown"):
+                    continue
+            rows.append(
+                f'<div class="prior-row"><div class="prior-q">{fmt(entry["prompt"])}</div>'
+                f'<div class="prior-a">{fmt(store.format_value(entry))}</div></div>'
+            )
     if not rows:
         return ""
 

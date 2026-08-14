@@ -218,3 +218,71 @@ class TestFollowUpPanel(unittest.TestCase):
 
 if __name__ == "__main__":
     unittest.main()
+
+
+class TestRichContext(unittest.TestCase):
+    """The context block carries reasoning, which is often a table or a list."""
+
+    def test_paragraphs(self):
+        html = render.rich("First para.\n\nSecond para.")
+        self.assertEqual(html.count("<p>"), 2)
+
+    def test_bullets(self):
+        html = render.rich("- one\n- two")
+        self.assertIn("<ul><li>one</li><li>two</li></ul>", html)
+
+    def test_pipe_table(self):
+        html = render.rich("| A | B |\n|---|---|\n| 1 | 2 |")
+        self.assertIn("<table", html)
+        self.assertIn("<th>A</th>", html)
+        self.assertIn("<td>2</td>", html)
+
+    def test_inline_formatting_inside_blocks(self):
+        self.assertIn("<strong>bold</strong>", render.rich("a **bold** word"))
+        self.assertIn("<code>x</code>", render.rich("- uses `x`"))
+
+    def test_everything_is_escaped_first(self):
+        html = render.rich("<script>alert(1)</script>\n\n| <b> |\n|---|\n| <i> |")
+        self.assertNotIn("<script>", html)
+        self.assertNotIn("<b>", html)
+        self.assertIn("&lt;script&gt;", html)
+
+    def test_empty_context_renders_nothing(self):
+        self.assertEqual(render.rich(""), "")
+        self.assertEqual(render.rich(None), "")
+
+    def test_a_table_needs_its_divider(self):
+        # Without the divider row it is prose that happens to contain pipes.
+        html = render.rich("| not | a table |")
+        self.assertNotIn("<table", html)
+
+
+class TestFollowsAnInterview(unittest.TestCase):
+    """A distilled questionnaire follows the interview it came from."""
+
+    def setUp(self):
+        self.spec = spec_mod.validate(minimal(follows="chat"))
+        self.transcript = {
+            "kind": "interview",
+            "title": "A conversation",
+            "submitted_at": "2026-08-14T00:00:00Z",
+            "exchanges": [
+                {"seq": 1, "prompt": "What broke?", "answer": "sessions dropped",
+                 "selected": ["Reliability"], "skipped": False},
+                {"seq": 2, "prompt": "Never shown", "answer": "", "skipped": True},
+                {"seq": 3, "prompt": "Blank one", "answer": "", "selected": [],
+                 "skipped": False},
+            ],
+        }
+
+    def test_interview_answers_render_in_the_prior_panel(self):
+        html = render.render(self.spec, prior=self.transcript)
+        self.assertIn("Already decided", html)
+        self.assertIn("What broke?", html)
+        self.assertIn("sessions dropped", html)
+        self.assertIn("Reliability", html)
+
+    def test_skipped_and_empty_exchanges_are_left_out(self):
+        html = render.render(self.spec, prior=self.transcript)
+        self.assertNotIn("Never shown", html)
+        self.assertNotIn("Blank one", html)

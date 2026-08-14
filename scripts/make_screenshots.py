@@ -229,19 +229,41 @@ IV_HISTORY = [
     },
 ]
 
+IV_CONTEXT = """The three differ mainly in what happens when the store is unreachable.
+
+| Option | Survives a deploy | New service to run |
+|---|---|---|
+| Redis | yes | yes |
+| The existing Postgres | yes | no |
+| Signed cookies | yes | no |
+
+- Revocation is hard with cookies and easy with a server-side store.
+- Cookie payloads are capped at about 4KB.
+"""
+
 IV_QUESTION = """
 document.getElementById("stateProcessing").classList.remove("is-active");
 document.getElementById("stateAsking").classList.add("is-active");
 document.getElementById("ivSeq").textContent = "Question 3";
-document.getElementById("ivPrompt").textContent =
-  "You said support absorbs it. What would you have to see to call this urgent?";
+document.getElementById("ivPrompt").textContent = "What backs the session store?";
 var why = document.getElementById("ivWhy");
-why.textContent = "I want your threshold, not mine — it decides whether this " +
-  "ships before or after the migration.";
+why.textContent = "It decides the failure mode when the store is unreachable, " +
+  "and everything after it depends on the answer.";
 why.hidden = false;
+document.getElementById("ivContextBody").innerHTML = %s;
+document.getElementById("ivContext").hidden = false;
+document.getElementById("ivContextMore").hidden = false;
+var chips = document.getElementById("ivChips");
+chips.hidden = false;
+["Redis", "The existing Postgres", "Signed cookies"].forEach(function (o, i) {
+  var b = document.createElement("button");
+  b.type = "button";
+  b.className = "iv-chip" + (i === 1 ? " is-selected" : "");
+  b.textContent = o;
+  chips.appendChild(b);
+});
 document.getElementById("ivAnswer").value =
-  "Honestly, a customer telling us. Which has probably already happened and we " +
-  "filed it as a login bug.";
+  "One less service to run on-call for. We already page on Postgres.";
 var d = document.getElementById("ivDictate");
 d.querySelector("span").textContent =
   "Prefer to talk? Press the microphone key, or Fn twice, to dictate.";
@@ -263,11 +285,12 @@ def interview_shots(chrome: str) -> None:
     record["exchanges"] = IV_HISTORY
     page = render.interview_page(record)
 
+    question_script = IV_QUESTION % json.dumps(render.rich(IV_CONTEXT))
     shot(
         chrome,
-        page.replace("</body>", f"<script>{IV_QUESTION}</script></body>"),
+        page.replace("</body>", f"<script>{question_script}</script></body>"),
         "interview.png",
-        "1100,900",
+        "1100,1060",
         theme="light",
     )
     shot(

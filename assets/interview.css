@@ -99,6 +99,92 @@
   cursor: pointer;
 }
 .iv-chip:hover { border-color: var(--accent); color: var(--accent); }
+.iv-chip.is-selected {
+  border-color: var(--accent);
+  background: var(--accent-soft);
+  color: var(--accent);
+  font-weight: 600;
+}
+.iv-chip.is-selected::before { content: "✓ "; }
+
+/* what was picked, in the running transcript */
+.iv-a-picks { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 5px; }
+.iv-picked {
+  font-size: 12.5px;
+  padding: 2px 9px;
+  border-radius: 999px;
+  background: var(--accent-soft);
+  color: var(--accent);
+  font-weight: 600;
+}
+
+/* ---------- additional context ---------- */
+
+.iv-context {
+  background: var(--surface-2);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 12px 15px;
+  margin-bottom: 15px;
+}
+.iv-context-head {
+  font-size: 11px;
+  letter-spacing: .08em;
+  text-transform: uppercase;
+  color: var(--text-3);
+  font-weight: 600;
+  margin-bottom: 7px;
+}
+.iv-context-body { font-size: 13.5px; line-height: 1.55; color: var(--text-2); }
+
+/* Clamped by height rather than -webkit-line-clamp, which only counts inline
+   text and does nothing useful once the context holds a table or a list —
+   which is most of the time, since that is what the block is for. */
+.iv-context-body.is-clamped {
+  max-height: 6.2em;                 /* about four lines */
+  overflow: hidden;
+  position: relative;
+}
+.iv-context-body.is-clamped::after {
+  content: "";
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  height: 2.2em;
+  background: linear-gradient(to bottom, transparent, var(--surface-2));
+  pointer-events: none;
+}
+.iv-context-body p { margin: 0 0 9px; }
+.iv-context-body p:last-child { margin-bottom: 0; }
+.iv-context-body ul { margin: 0 0 9px; padding-left: 18px; }
+.iv-context-body li { margin-bottom: 3px; }
+.iv-context-body code {
+  font-family: var(--mono);
+  font-size: 12px;
+  background: var(--accent-soft);
+  padding: 1px 4px;
+  border-radius: 3px;
+}
+.ctx-table { border-collapse: collapse; width: 100%; margin: 0 0 9px; font-size: 13px; }
+.ctx-table th, .ctx-table td {
+  text-align: left;
+  padding: 5px 9px 5px 0;
+  border-bottom: 1px solid var(--border);
+  vertical-align: top;
+}
+.ctx-table th { color: var(--text-3); font-weight: 600; font-size: 12px; }
+.iv-context-more {
+  font: inherit;
+  font-size: 12px;
+  background: none;
+  border: 0;
+  padding: 0;
+  margin-top: 8px;
+  color: var(--accent);
+  cursor: pointer;
+  text-decoration: underline;
+}
 
 .iv-actions {
   display: flex;

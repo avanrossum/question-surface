@@ -44,8 +44,8 @@ Two things are worth knowing before changing anything.
 ## Testing
 
 ```bash
-python3 -m unittest discover -s tests -t .   # 79 tests
-python3 scripts/check_browser.py             # 31 client-side checks
+python3 -m unittest discover -s tests -t .   # 94 tests
+python3 scripts/check_browser.py             # 41 client-side checks
 ```
 
 The Python suite covers spec validation, response building, conditional visibility, persistence, rendering, path resolution, config, follow-up panels, and the interview state machine.
@@ -56,13 +56,16 @@ CI runs the Python suite on 3.9 through 3.13 and the browser checks with `--requ
 
 ### What the browser checks have caught
 
-Three real defects so far, which is the argument for keeping them:
+Six real defects so far, which is the argument for keeping them:
 
 - **A rank question counted as blank until dragged.** A ranked list renders a complete ordering the moment it appears, so a respondent who agreed with the presented order had to disturb it to prove agreement. It now records the presented order with `reordered: false`, keeping acceptance distinguishable from an arranged ranking.
 - **A hidden branch kept its controls filled in.** Re-showing the branch displayed a checked radio that submit reported as blank.
 - **The interview client could busy-loop.** Its long poll re-issued the instant it returned, paced only by the server holding the connection open. Anything answering immediately would have spun it as fast as the event loop allowed. It hung a headless Chrome outright, which is how it was found.
+- **A closing summary printed once per answer.** `send()` forked a second poll loop on every answer, and each fork called `finish()` at the end.
+- **The context "Read more" toggle never appeared.** Overflow was measured while the card was still `display:none`, where both heights read zero.
+- **The context clamp did nothing at all.** `-webkit-line-clamp` only counts inline text, and the block almost always holds a table or a list.
 
-And one check that was passing while testing nothing: a check named `submitted_with_blanks` claimed to prove a blank required question blocks submission, but the harness had answered every required question by that point, so what it actually observed was the standalone preview panel appearing.
+And two checks that were passing while testing nothing. One named `submitted_with_blanks` claimed to prove a blank required question blocks submission, but the harness had answered every required question by that point, so what it observed was the standalone preview panel appearing. Another asserted the context was clamped by looking for the class name rather than measuring whether anything was actually clipped — which is how the broken clamp above survived its own check.
 
 ### A note on timing
 

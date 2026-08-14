@@ -214,6 +214,22 @@ setTimeout(function () {
   log("history_count", document.querySelectorAll(".iv-exchange").length);
   log("prompt_text", (document.getElementById("ivPrompt").textContent || "").slice(0, 24));
   log("wait_copy", (document.getElementById("ivProcPrimary").textContent || "").slice(0, 8));
+  log("summary_count", document.querySelectorAll(".iv-summary").length);
+  log("chip_count", document.querySelectorAll(".iv-chip").length);
+  log("chip_selected", document.querySelectorAll(".iv-chip.is-selected").length);
+  log("answer_box_text", (document.getElementById("ivAnswer").value || "").length);
+  log("context_shown", !document.getElementById("ivContext").hidden);
+  var ctxBody = document.getElementById("ivContextBody");
+  log("context_clamped", ctxBody.clientHeight < ctxBody.scrollHeight - 4);
+  var moreBtn = document.getElementById("ivContextMore");
+  log("context_more_offered", !moreBtn.hidden);
+  var clampedHeight = ctxBody.clientHeight;
+  moreBtn.click();
+  log("context_expands", ctxBody.clientHeight > clampedHeight);
+  log("context_more_relabelled", moreBtn.textContent === "Show less");
+  log("context_has_table",
+    !!document.getElementById("ivContextBody").querySelector("table"));
+  log("picks_in_history", document.querySelectorAll(".iv-picked").length);
   var pre = document.createElement("pre");
   pre.textContent = "\\n@@" + out.join("\\n@@") + "\\n";
   document.body.appendChild(pre);
@@ -236,6 +252,8 @@ AUTO_ANSWER = """
   var timer = setInterval(function () {
     var asking = document.getElementById("stateAsking");
     if (asking && asking.classList.contains("is-active")) {
+      var chip = document.querySelector(".iv-chip");
+      if (chip) chip.click();
       document.getElementById("ivAnswer").value = "the deploy drops them";
       document.getElementById("ivSend").click();
       clearInterval(timer);
@@ -247,12 +265,33 @@ AUTO_ANSWER = """
 """
 
 
+CLICK_CHIP = """
+<script>
+(function () {
+  var tries = 0;
+  var timer = setInterval(function () {
+    var chip = document.querySelector(".iv-chip");
+    if (chip) { chip.click(); clearInterval(timer); }
+    if (++tries > 200) clearInterval(timer);
+  }, 40);
+})();
+</script>
+"""
+
+
 def run_interview_case(
-    chrome: str, plan: dict, settle_ms: int, tmp: Path, auto_answer: bool = False
+    chrome: str,
+    plan: dict,
+    settle_ms: int,
+    tmp: Path,
+    auto_answer: bool = False,
+    click_chip: bool = False,
 ) -> dict:
     html = interview_page_html()
     html = html.replace("</head>", (STUB_TEMPLATE % json.dumps(plan)) + "</head>")
-    tail = (AUTO_ANSWER if auto_answer else "") + "<script>" + (REPORTER % settle_ms) + "</script>"
+    tail = (AUTO_ANSWER if auto_answer else "")
+    tail += CLICK_CHIP if click_chip else ""
+    tail += "<script>" + (REPORTER % settle_ms) + "</script>"
     html = html.replace("</body>", tail + "</body>")
     page = tmp / "interview.html"
     page.write_text(html, encoding="utf-8")
@@ -358,7 +397,12 @@ def check_interview(chrome: str) -> int:
             {
                 "polls": [
                     {"question": {"seq": 1, "prompt": "What broke first?",
-                                  "why": "symptom before solution", "options": []}},
+                                  "why": "symptom before solution",
+                                  "options": ["Reliability", "Cost"],
+                                  "context_html": "<p>Some reasoning.</p>"
+                                  + "<table class=\'ctx-table\'><tbody><tr>"
+                                  + "<td>a</td></tr></tbody></table>"
+                                  + "<p>line2</p><p>line3</p><p>line4</p><p>line5</p>"}},
                     {"done": True, "summary": "thanks"},
                 ]
             },
@@ -392,6 +436,31 @@ def check_interview(chrome: str) -> int:
         # ...and once an answer is sent, it does say it is reading.
         expectations += [
             (flow.get("wait_copy"), "Reading", "after answering, the wait says reading"),
+            (flow.get("summary_count"), "1", "the closing summary appears exactly once"),
+            (flow.get("picks_in_history"), "1", "the selection is kept in the transcript"),
+        ]
+
+        # Chips are a selection, not text pasted into the answer box.
+        chips = run_interview_case(
+            chrome,
+            {"polls": [{"question": {"seq": 1, "prompt": "Which?",
+                                     "options": ["Reliability", "Cost"],
+                                     "context_html": "<p>a</p><p>b</p><p>c</p>"
+                                     + "<p>d</p><p>e</p><p>f</p>"}},
+                       {"waiting": True}]},
+            700,
+            tmp,
+            click_chip=True,
+        )
+        expectations += [
+            (chips.get("chip_count"), "2", "options render as chips"),
+            (chips.get("chip_selected"), "1", "clicking a chip selects it"),
+            (chips.get("answer_box_text"), "0", "selecting a chip leaves the answer box alone"),
+            (chips.get("context_shown"), "true", "a context block is shown when supplied"),
+            (chips.get("context_clamped"), "true", "context is actually clipped, not just classed"),
+            (chips.get("context_more_offered"), "true", "read more is offered when there is more"),
+            (chips.get("context_expands"), "true", "read more actually expands it"),
+            (chips.get("context_more_relabelled"), "true", "the toggle relabels to show less"),
         ]
 
         # The agent dies. The page must say so rather than animate forever.
@@ -468,7 +537,7 @@ def main() -> int:
 
     interview_failures = check_interview(chrome)
     failures += interview_failures
-    ran += 14
+    ran += 24
 
     print()
     if failures:

@@ -2,25 +2,16 @@
 
 Things deliberately not in the current release, with the reason. Decisions here came from the `ship-design` questionnaire and the `readme-shape` interview, both tracked under `.question-surface/responses/`, unless noted.
 
-## Next: the interview → questionnaire handoff
-
-Raised in the `readme-shape` interview: *"the raw question surface is also important for clarifying — ESPECIALLY AFTER AN INTERVIEW."*
-
-An interview draws material out and reliably ends with a handful of things that have become precise enough to be decided rather than discussed. Turning those into a questionnaire is manual today: read the transcript, hand-author a spec. It should not be — the transcript already records what was asked and what came back, and `follows` already exists for showing a prior round's decisions.
-
-Shape, roughly: `qsurface interview distill <id>` scaffolds a questionnaire from a finished transcript, with the open threads as draft questions for the agent to edit rather than accept. The agent still authors the real questions; the tool removes the transcription step and the risk of losing something that was said.
-
-This also settles how the two modes are described: not a menu, but a sequence you can enter at either end. An interview to find out what the questions are, a form to pin the answers down, each usable alone.
-
 ## Shipped since this file was written
 
 **Interview mode** (v1.3.0). One question at a time, each written after reading the last answer, conducted as an expert interviewer in a stated or inferred domain. It brought the persistent-server model with it, as predicted: `interview open` leaves a detached server, `ask` blocks for one answer, `close` finalises. The transcript is written after every answer, so an interrupted interview still leaves a record.
 
-Still open from that design:
+**The interview → questionnaire handoff** (v1.4.0). `qsurface interview distill` scaffolds a questionnaire from a finished transcript, each exchange carried across as a marked draft, with `follows` pointing back at the interview. Raised in the `readme-shape` interview: *"the raw question surface is also important for clarifying — ESPECIALLY AFTER AN INTERVIEW."*
+
+Still open from those designs:
 
 - **Richer question types mid-interview.** Today an interview question is free text plus optional suggested chips. A scale or a ranking mid-conversation would sometimes be the right instrument.
 - **Resuming a closed interview.** A follow-up session that carries the previous transcript, the way `follows` works for questionnaires.
-- **The waiting state.** The current processing animation is a plain three-dot pulse. It is the screen the respondent sees in every gap, and it deserves a designed treatment.
 - **Dictation on questionnaire `longtext` fields.** The nudge exists in interview mode; the same hint would help on long-form form fields.
 
 ## Considered and deferred

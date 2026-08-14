@@ -227,3 +227,88 @@ class TestTranscript(InterviewTestCase):
 
 if __name__ == "__main__":
     unittest.main()
+
+
+class TestSelections(InterviewTestCase):
+    """A chip is a selection, recorded apart from whatever was typed."""
+
+    def _reply(self, session, text, picks, skipped=False):
+        for _ in range(200):
+            if session.pending:
+                session.answer(session.pending["seq"], text, skipped, picks)
+                return
+            time.sleep(0.005)
+
+    def test_selection_and_prose_are_both_recorded(self):
+        session = interview.Session(self.record())
+        threading.Thread(
+            target=lambda: self._reply(session, "and here is why", ["Option A"]),
+            daemon=True,
+        ).start()
+        answer = session.ask({"prompt": "Which?", "options": ["Option A", "B"]}, 5)
+        self.assertEqual(answer["selected"], ["Option A"])
+        self.assertEqual(answer["answer"], "and here is why")
+
+    def test_a_selection_alone_is_an_answer(self):
+        session = interview.Session(self.record())
+        threading.Thread(
+            target=lambda: self._reply(session, "", ["Option A"]), daemon=True
+        ).start()
+        answer = session.ask({"prompt": "Which?", "options": ["Option A", "B"]}, 5)
+        self.assertEqual(answer["selected"], ["Option A"])
+        self.assertFalse(answer["skipped"])
+
+    def test_several_selections_are_kept_in_order(self):
+        session = interview.Session(self.record())
+        threading.Thread(
+            target=lambda: self._reply(session, "", ["B", "A"]), daemon=True
+        ).start()
+        answer = session.ask({"prompt": "Which?", "options": ["A", "B"]}, 5)
+        self.assertEqual(answer["selected"], ["B", "A"])
+
+    def test_a_skip_carries_no_selection(self):
+        session = interview.Session(self.record())
+        threading.Thread(
+            target=lambda: self._reply(session, "", [], True), daemon=True
+        ).start()
+        answer = session.ask({"prompt": "Which?", "options": ["A", "B"]}, 5)
+        self.assertTrue(answer["skipped"])
+        self.assertEqual(answer["selected"], [])
+
+    def test_markdown_shows_the_selection_above_the_prose(self):
+        record = self.record()
+        record["exchanges"] = [
+            {"seq": 1, "prompt": "Which?", "selected": ["Option A"],
+             "answer": "because of X", "skipped": False}
+        ]
+        markdown = interview.transcript_markdown(record)
+        self.assertIn("**Option A**", markdown)
+        self.assertIn("because of X", markdown)
+        self.assertLess(
+            markdown.index("**Option A**"), markdown.index("because of X")
+        )
+
+
+class TestQuestionContext(InterviewTestCase):
+    def test_context_is_rendered_once_when_the_question_is_posted(self):
+        session = interview.Session(self.record())
+        threading.Thread(
+            target=lambda: self._answer_when_pending(session), daemon=True
+        ).start()
+        session.ask(
+            {"prompt": "Which?", "context": "Some **reasoning**.\n\n- a bullet"},
+            timeout=5,
+        )
+        # The rendered form travels to the browser; the source is what is kept.
+        exchange = session.record["exchanges"][0]
+        self.assertNotIn("context_html", exchange)
+        self.assertIn("**reasoning**", exchange["context"])
+
+    def _answer_when_pending(self, session):
+        for _ in range(200):
+            if session.pending:
+                self.assertIn("<strong>reasoning</strong>", session.pending["context_html"])
+                self.assertIn("<li>", session.pending["context_html"])
+                session.answer(session.pending["seq"], "ok", False, [])
+                return
+            time.sleep(0.005)

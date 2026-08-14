@@ -54,7 +54,23 @@ The skill tells the agent to conduct it as an expert interviewer in a stated or 
 
 ![The processing state](docs/images/interview-processing.png)
 
-The two modes feed each other. An interview finds out what the questions are; a form pins the answers down. Either works alone.
+## And then a form, to pin down what the interview turned up
+
+```bash
+qsurface interview distill outage
+```
+
+An interview reliably ends with things that have become precise enough to decide rather than discuss. `distill` scaffolds a questionnaire from the transcript, carrying each exchange across as a marked draft for the agent to rewrite. Serving it shows the interview above the questions, so nobody is reconstructing the conversation from memory.
+
+The tool cannot tell which parts of a conversation became decisions, so it does not pretend to — every question it writes is a TODO the agent is expected to replace.
+
+---
+
+## Why "Question Surface"?
+
+Because it's a surface. For questions.
+
+It was named mid-session in the same mood that produced it, and it stuck because it is accurate. The name tells you nothing at all until you have used the thing once, which is what the rest of this page is for. The command is `qsurface`, which is fun to say and harder to justify.
 
 ---
 
@@ -72,7 +88,7 @@ The two modes feed each other. An interview finds out what the questions are; a 
 
 Standard library only, so no dependency can move out from under it. Loopback only, with no auth and no session model, because it must never be reachable off the machine. The server exits on submit, so there is no daemon left running. Validation fails at load, so a broken questionnaire costs you nothing.
 
-It has 79 Python tests and 31 client-side checks that drive a real browser, running on Python 3.9 through 3.13 in CI. Those checks have caught three real defects so far, including one that was passing while testing nothing at all.
+It has 94 Python tests and 41 client-side checks that drive a real browser, running on Python 3.9 through 3.13 in CI. Those checks have caught six real defects so far, including two that were passing while testing nothing at all.
 
 That last part was an accident. "No bugs. Make no mistakes." went into the original spec as a joke, and then drove a CI matrix, a browser harness, and a habit of verifying claims rather than asserting them. The tool was built in under a day with Claude Code, which is worth knowing mostly because the joke turned out to be the most productive line in the specification.
 

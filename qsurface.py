@@ -516,8 +516,17 @@ def cmd_interview_ask(args) -> int:
         print("error: that interview is not running — reopen it", file=sys.stderr)
         return 1
 
-    question = {"prompt": args.prompt, "why": args.why or "",
-                "placeholder": args.placeholder or "", "options": args.option or []}
+    context = args.context or ""
+    if args.context_file:
+        context = Path(args.context_file).read_text(encoding="utf-8")
+
+    question = {
+        "prompt": args.prompt,
+        "why": args.why or "",
+        "context": context,
+        "placeholder": args.placeholder or "",
+        "options": args.option or [],
+    }
     minutes = args.timeout if args.timeout is not None else config_mod.get(
         "timeout_minutes"
     )
@@ -541,6 +550,9 @@ def cmd_interview_ask(args) -> int:
 
     answer = result["answer"]
     if args.text:
+        picked = answer.get("selected") or []
+        if picked and not answer.get("skipped"):
+            print("[" + ", ".join(picked) + "]")
         print("" if answer.get("skipped") else answer.get("answer", ""))
     else:
         print(json.dumps(answer, indent=2, ensure_ascii=False))
@@ -577,6 +589,105 @@ def cmd_interview_list(args) -> int:
         print(f"  {session['id']:<24} :{session['port']}  {state}")
         print(f"  {'':<24} {session['title']}")
     return 0
+
+
+def cmd_interview_distill(args) -> int:
+    """Scaffold a questionnaire from a finished interview.
+
+    An interview reliably ends with material that has become precise enough to
+    decide rather than discuss. Turning that into a questionnaire by hand means
+    re-reading the transcript and retyping it, which is where things get lost.
+
+    The tool cannot know which exchanges became decisions, so it does not
+    pretend to: every question it writes is a marked draft for the agent to
+    rewrite or delete, and the material behind each one travels with it.
+    """
+    latest = latest_response(args.interview)
+    if not latest:
+        raise SystemExit(f"error: no transcript for interview {args.interview!r}")
+
+    transcript = json.loads(latest.read_text(encoding="utf-8"))
+    if transcript.get("kind") != "interview":
+        raise SystemExit(f"error: {latest} is not an interview transcript")
+
+    exchanges = [e for e in transcript.get("exchanges", []) if not e.get("skipped")]
+    if args.only:
+        wanted = {int(n) for n in args.only.replace(" ", "").split(",") if n}
+        exchanges = [e for e in exchanges if e.get("seq") in wanted]
+        missing = wanted - {e.get("seq") for e in exchanges}
+        if missing:
+            print(
+                f"note: no answered exchange for {sorted(missing)}", file=sys.stderr
+            )
+    if not exchanges:
+        raise SystemExit("error: nothing to distill — no answered exchanges selected")
+
+    questions: list[dict] = []
+    for exchange in exchanges:
+        picked = exchange.get("selected") or []
+        said = " · ".join(picked)
+        if exchange.get("answer"):
+            said = f"{said}\n\n{exchange['answer']}" if said else exchange["answer"]
+        questions.append(
+            {
+                "type": "info",
+                "prompt": f"**Asked:** {exchange['prompt']}\n\n**You said:** {said}",
+            }
+        )
+        questions.append(
+            {
+                "id": f"decision-{exchange['seq']}",
+                "type": "longtext",
+                "prompt": f"TODO — the decision this implies. Drafted from: "
+                f"{_shorten(exchange['prompt'])}",
+                "why": "TODO — say what this answer unblocks and what breaks if "
+                "it goes the other way.",
+                "required": False,
+            }
+        )
+
+    questionnaire_id = args.out or f"{args.interview}-decisions"
+    spec = {
+        "id": questionnaire_id,
+        "title": f"{transcript.get('title', args.interview)} — decisions",
+        "intro": (
+            f"Distilled from the *{transcript.get('title', args.interview)}* "
+            f"interview of {transcript.get('started_at', '')[:10]}.\n\n"
+            "**Every question below is a draft.** The tool cannot tell which "
+            "parts of a conversation became decisions, so it carried all of "
+            "them across and marked them. Rewrite what is a real fork, delete "
+            "what is already settled, and put the options and their costs in "
+            "before serving this."
+        ),
+        "follows": args.interview,
+        "sections": [
+            {
+                "title": "Decisions to confirm",
+                "intro": f"Drafted from {len(exchanges)} exchange(s).",
+                "questions": questions,
+            }
+        ],
+    }
+
+    spec_mod.validate(json.loads(json.dumps(spec)))  # fail here, not on serve
+
+    directory = paths.questionnaires_dir()
+    directory.mkdir(parents=True, exist_ok=True)
+    path = directory / f"{questionnaire_id}.json"
+    if path.exists() and not args.force:
+        raise SystemExit(f"error: {path} already exists — pass --force to replace")
+    path.write_text(json.dumps(spec, indent=2, ensure_ascii=False) + "\n", encoding="utf-8")
+
+    print(f"distilled {len(exchanges)} exchange(s) -> {path}")
+    print(f"  every question is a TODO draft; edit them before serving")
+    print(f"  serving it shows the interview above the questions (follows: {args.interview})")
+    print(f"  next: qsurface validate {questionnaire_id}")
+    return 0
+
+
+def _shorten(text: str, limit: int = 70) -> str:
+    text = " ".join(str(text).split())
+    return text if len(text) <= limit else text[: limit - 1].rstrip() + "…"
 
 
 def cmd_archive(args) -> int:
@@ -687,7 +798,17 @@ def main(argv: list[str] | None = None) -> int:
     s.add_argument(
         "--option",
         action="append",
-        help="a suggested answer, offered as a chip; repeatable",
+        help="a selectable answer, offered as a chip and recorded separately "
+        "from the typed answer; repeatable",
+    )
+    s.add_argument(
+        "--context",
+        help="reasoning behind the question, shown in a collapsed block. "
+        "Supports paragraphs, bullets, pipe tables and inline formatting",
+    )
+    s.add_argument(
+        "--context-file",
+        help="read the context from a file instead, for anything long",
     )
     s.add_argument("--timeout", type=int, default=None, metavar="MINUTES")
     s.add_argument("--text", action="store_true", help="print the answer text only")
@@ -700,6 +821,17 @@ def main(argv: list[str] | None = None) -> int:
 
     s = iv.add_parser("list", help="show open interviews")
     s.set_defaults(func=cmd_interview_list)
+
+    s = iv.add_parser(
+        "distill", help="scaffold a questionnaire from a finished interview"
+    )
+    s.add_argument("interview")
+    s.add_argument("--out", help="questionnaire id, default <interview>-decisions")
+    s.add_argument(
+        "--only", help="comma-separated exchange numbers, default every answered one"
+    )
+    s.add_argument("--force", action="store_true", help="overwrite an existing spec")
+    s.set_defaults(func=cmd_interview_distill)
 
     s = iv.add_parser("_serve", help=argparse.SUPPRESS)
     s.add_argument("interview")
