@@ -1,0 +1,123 @@
+{
+  "id": "example",
+  "title": "Example questionnaire — every question type",
+  "intro": "This is the reference spec. It exercises every question type and every option the renderer supports, so it doubles as the format documentation. Copy it, strip it, and author from it.",
+  "context_docs": [
+    "README.md"
+  ],
+  "sections": [
+    {
+      "title": "Choice questions",
+      "intro": "Single-select, multi-select, and ranking.",
+      "questions": [
+        {
+          "type": "info",
+          "prompt": "An `info` block carries context and collects nothing. Use it to brief the respondent before a hard question rather than padding the prompt itself."
+        },
+        {
+          "id": "single-example",
+          "type": "single",
+          "prompt": "Which approach should we take?",
+          "why": "The `why` line states what the answer unblocks. Always fill it in — a decision-maker answers better when they know what hangs on it.",
+          "required": true,
+          "recommend": "build",
+          "options": [
+            {
+              "value": "build",
+              "label": "Build it ourselves",
+              "detail": "Full control, higher cost. `detail` is where the tradeoff goes."
+            },
+            {
+              "value": "adopt",
+              "label": "Adopt an existing library",
+              "detail": "Faster, but we inherit someone else's model and its upgrade path."
+            },
+            {
+              "value": "defer",
+              "label": "Defer the decision",
+              "detail": "Valid when the fork does not block current work."
+            }
+          ]
+        },
+        {
+          "id": "multi-example",
+          "type": "multi",
+          "prompt": "Which of these are in scope?",
+          "why": "Multi-select returns a list. Use it for scope questions where the options are not mutually exclusive.",
+          "options": [
+            { "value": "data-model", "label": "Data model" },
+            { "value": "api", "label": "Public API" },
+            { "value": "migration", "label": "Migration path" },
+            { "value": "docs", "label": "Documentation" }
+          ]
+        },
+        {
+          "id": "conditional-example",
+          "type": "longtext",
+          "prompt": "You picked \"defer\" — what has to be true before this can be decided?",
+          "why": "This question only appears when `single-example` is `defer`. Conditionals keep a long questionnaire from asking irrelevant things.",
+          "show_if": { "question": "single-example", "equals": "defer" }
+        },
+        {
+          "id": "rank-example",
+          "type": "rank",
+          "prompt": "Order these by priority.",
+          "why": "Ranking is for questions where relative order matters more than absolute scoring.",
+          "options": [
+            { "value": "correctness", "label": "Correctness" },
+            { "value": "speed", "label": "Speed to ship" },
+            { "value": "durability", "label": "Long-term durability" }
+          ]
+        }
+      ]
+    },
+    {
+      "title": "Scalar questions",
+      "intro": "Free text, numbers, dates, and scales.",
+      "questions": [
+        {
+          "id": "scale-example",
+          "type": "scale",
+          "prompt": "How confident are you in that answer?",
+          "why": "A scale is useful for confidence and priority. Keep the range short.",
+          "min": 1,
+          "max": 5,
+          "min_label": "Guessing",
+          "max_label": "Certain"
+        },
+        {
+          "id": "text-example",
+          "type": "text",
+          "prompt": "What should the component be called?",
+          "placeholder": "e.g. session-store"
+        },
+        {
+          "id": "longtext-example",
+          "type": "longtext",
+          "prompt": "Anything else that would change the design?",
+          "why": "Open-ended questions belong at the end of a section, not scattered through it.",
+          "placeholder": "Free text"
+        },
+        {
+          "id": "number-example",
+          "type": "number",
+          "prompt": "How many records are we talking about?"
+        },
+        {
+          "id": "date-example",
+          "type": "date",
+          "prompt": "When does this need to be live?",
+          "allow_unknown": true
+        },
+        {
+          "id": "no-extras-example",
+          "type": "text",
+          "prompt": "A bare question with no unknown toggle and no notes box.",
+          "why": "Set `allow_unknown` and `notes` to false when the extras would be noise.",
+          "allow_unknown": false,
+          "notes": false
+        }
+      ]
+    }
+  ]
+}
