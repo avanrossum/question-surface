@@ -4,6 +4,20 @@ Semver. Newest first. The tool carries its own version because questionnaires au
 
 ---
 
+## 1.3.2 — 2026-08-14
+
+### Fixed
+
+- **The waiting state no longer claims to be reading an answer that does not exist.** The interview page enters that state on load, before anything has been said. It now says what is actually true, with three variants chosen by why it was entered: getting the first question ready, waiting for the next one after a reload, or reading the answer just sent. Three checks assert the copy matches the reason.
+
+### Changed
+
+- **The README was rewritten from an interview conducted with the tool** (`.question-surface/responses/readme-shape/`). It opens with the request that started the project, leads with what both modes have in common rather than billing one above the other, and stops at 91 lines. The reference material it used to carry moved into `docs/USAGE.md`, `docs/INTERVIEWS.md`, and `docs/DESIGN.md`, which are linked prominently rather than buried.
+
+### Added
+
+- Roadmap entry for an interview → questionnaire handoff, which came out of that interview: an interview reliably ends with things that have become precise enough to decide, and turning those into a questionnaire is manual today.
+
 ## 1.3.1 — 2026-08-14
 
 ### Changed

@@ -1,6 +1,16 @@
 # Roadmap
 
-Things deliberately not in the current release, with the reason. Decisions here came from the `ship-design` questionnaire (`.question-surface/responses/ship-design/`) unless noted.
+Things deliberately not in the current release, with the reason. Decisions here came from the `ship-design` questionnaire and the `readme-shape` interview, both tracked under `.question-surface/responses/`, unless noted.
+
+## Next: the interview → questionnaire handoff
+
+Raised in the `readme-shape` interview: *"the raw question surface is also important for clarifying — ESPECIALLY AFTER AN INTERVIEW."*
+
+An interview draws material out and reliably ends with a handful of things that have become precise enough to be decided rather than discussed. Turning those into a questionnaire is manual today: read the transcript, hand-author a spec. It should not be — the transcript already records what was asked and what came back, and `follows` already exists for showing a prior round's decisions.
+
+Shape, roughly: `qsurface interview distill <id>` scaffolds a questionnaire from a finished transcript, with the open threads as draft questions for the agent to edit rather than accept. The agent still authors the real questions; the tool removes the transcription step and the risk of losing something that was said.
+
+This also settles how the two modes are described: not a menu, but a sequence you can enter at either end. An interview to find out what the questions are, a form to pin the answers down, each usable alone.
 
 ## Shipped since this file was written
 

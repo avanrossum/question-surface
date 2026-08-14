@@ -1,0 +1,114 @@
+{
+  "interview_id": "readme-shape",
+  "title": "How the README should read",
+  "kind": "interview",
+  "domain": "developer documentation and positioning",
+  "respondent": "Alexander van Rossum",
+  "started_at": "2026-08-14T20:54:02Z",
+  "ended_at": "2026-08-14T21:19:54Z",
+  "counts": {
+    "asked": 7,
+    "answered": 7,
+    "skipped": 0
+  },
+  "exchanges": [
+    {
+      "prompt": "Picture one specific person landing on this repo — someone real, not a persona. Who are they, and what were they doing five minutes before they got there?",
+      "why": "Everything downstream depends on this. A README written for someone hunting a tool reads nothing like one written for someone who followed a link out of curiosity, and I would rather build the whole thing around a person you can actually picture than around 'developers'.",
+      "placeholder": "",
+      "options": [],
+      "seq": 1,
+      "asked_at": "2026-08-14T20:54:09Z",
+      "answer": "Hrm - this is genuinely difficult to answer.  I build tools like this primarily for myself - to solve a specific pain point.  And another part that makes it really difficult to answer is that I don't generally go _looking_ for a solution, they evolve naturally out of working in an agentic workflow in the first place.  \n\nTake this tool, for example.  I got so tired of answering questions from Claude Code by either copying and pasting the questions one by one (or just referencing their numbers) and answering them in a large context turn, that i just told the agent:\n\n\"Ok, you know what?  Please just put all the questions you have for me in a form on an HTML page that saves the answers to a file and I'll answer them all at once\"\n\nThat eventually led to the server-based solution that this is now, and then it was extracted and turned into a repo for general use, because I wanted to have access to the tool in other sessions / projects.\n\nSo i guess the answer is - that one person out there who is frustrated at answering questions in a forced-strucutred manner, without the ability to really think through them, and who opted to search for \"how can i get claude to ask me questions more betterer\" or \"question interface for claude\" or who knows what.  This isn't exactly a mass appeal product.",
+      "skipped": false,
+      "answered_at": "2026-08-14T21:00:55Z"
+    },
+    {
+      "prompt": "You extracted this so you'd have it in other sessions and projects, and you say it isn't mass appeal. So: if nobody but you ever installed it, would the README have failed at its job?",
+      "why": "This is the fork everything else hangs off. A README for a stranger's first thirty seconds and a README for you in six months pull in opposite directions on length, on backstory, and on how much it explains versus assumes. I would rather commit to one than write something that half-serves both.",
+      "placeholder": "",
+      "options": [
+        "It would have failed — I want strangers using it",
+        "It would be fine — it's mine first, others are a bonus",
+        "Somewhere in between, and here's the split"
+      ],
+      "seq": 2,
+      "asked_at": "2026-08-14T21:01:32Z",
+      "answer": "Somewhere in between, and here's the split\n\nUltiamtely: I'm the user of the tool - i built it for me.  CC-command-center is a similar one.  I literally built that tool for me to use, it's built around my needs, but it could also prove to be infinitely useful for others too, so I released it open source - it won't make money - it uses undocumented hooks into the claude code CLI afterall, and i don't want to have an SLA for something like that.\n\nBut if no one uses it?  Not a big deal.  I'm not seeking validation - it more like \"look at this neat rock i found!  Don't you think it's cool too?\"  And if no one else thinks it's a cool rock (it's even got stripes!) that doesn't bother me,. because it's cool to _me_.\n\nSame goes for this - it's a cool rock. Hopefully other people see the cool rock.  But if i put the cool rock in my pocket, no one would.  If i put it back on the ground and put a sign over it that has an arrow pointing down with the words \"cool rock\" then maybe one of the other 5 people walking in that abandoned part of the woods might find it",
+      "skipped": false,
+      "answered_at": "2026-08-14T21:06:22Z"
+    },
+    {
+      "prompt": "Here is the moment this tool started, in your words from question one: *\"Ok, you know what? Please just put all the questions you have for me in a form on an HTML page that saves the answers to a file and I'll answer them all at once.\"* Should that quote be the first thing a visitor reads, or does it belong further down, or nowhere at all?",
+      "why": "You said the README is a sign in the woods reading 'cool rock', not a pitch. That quote is the most efficient sign I have: anyone who has felt the same frustration recognises it instantly, and anyone who hasn't will walk on — which by your framing is fine. But it is also you talking about yourself on your own front page, which is exactly the self-indulgence you might want cut. I want your read, not mine.",
+      "placeholder": "",
+      "options": [
+        "Open with it — it is the clearest sign I have",
+        "Further down, as a short origin note",
+        "Leave it out — the problem statement can stand alone"
+      ],
+      "seq": 3,
+      "asked_at": "2026-08-14T21:06:56Z",
+      "answer": "Open with it — it is the clearest sign I have\n\nI got nothing else to add here ◡̈",
+      "skipped": false,
+      "answered_at": "2026-08-14T21:07:24Z"
+    },
+    {
+      "prompt": "There are two tools in this repo now: the batch form, and interview mode. Right now the README leads with the form and treats the interview as a later section. Is that still the right billing — or is the rock actually the bigger idea underneath both, that the agent finally has a real surface for talking to you?",
+      "why": "This decides the opening line, the hero image, and whether someone skimming sees one tool or two. It also decides what happens to your origin quote: it is a perfect sign for the batch form specifically, and only half a sign if the repo is really about something broader.",
+      "placeholder": "",
+      "options": [
+        "The form leads — the interview is a second mode",
+        "Equal billing, two modes of one thing",
+        "The broader idea leads, both are examples of it",
+        "The interview leads — it is the more interesting one now"
+      ],
+      "seq": 4,
+      "asked_at": "2026-08-14T21:07:53Z",
+      "answer": "The broader idea leads, both are examples of it\n\nBoth are equally incredible surfaces to interact with claude.  I really, really, _Really_ love the interview format here.  I also love the way the questions work.  I also can't really believe how well i was able to get this to work with you in less than a day.\n\nThe interview interaction is honestly the neatest part, but that's because it works \"more like i do\".\n\nThat said - the raw question surface is also important for clarifying - ESPECIALLY AFTER AN INTERVIEW.\n\nThey are definintely two parts of a greater whole, and they build on each other and depend on each other and also stand alone from each other",
+      "skipped": false,
+      "answered_at": "2026-08-14T21:10:24Z"
+    },
+    {
+      "prompt": "The front page currently runs: pitch, the problem, what you get back, install, how an agent uses it, what the form can do (3 screenshots), interview mode (2 screenshots), the gate, where things live, design constraints, doc links, tests, licence. That is a long sign. How much of it stays on the front page, and what gets moved into docs/?",
+      "why": "This is the display half of what you asked me to interview you about. A sign in the woods is read at a glance, but a stranger deciding whether to install still wants proof it is real — and screenshots are the cheapest proof a UI tool has. I want to know where you draw that line before I start cutting.",
+      "placeholder": "Say what you would cut first, and what you would refuse to lose.",
+      "options": [
+        "Trim hard — sign, screenshots, install, and links out",
+        "Trim the middle, keep install and both modes in full",
+        "Keep it long, it doubles as the reference"
+      ],
+      "seq": 5,
+      "asked_at": "2026-08-14T21:10:56Z",
+      "answer": "Trim hard — sign, screenshots, install, and links out\n\n... I actually think a little of \"trim hard\" and \"trim the middle\"\n\nIT needs to sell itself and build excitement in the intro, to keep people reading.  IF they are truly interested, they'll read more in /docs.  So the links to various docs need to be well positioned and available and accessible.\n\nif they don't love it, well, maybe i'll get a star.\n\nBut install instructions also needs to be pretty clear from the start",
+      "skipped": false,
+      "answered_at": "2026-08-14T21:13:43Z"
+    },
+    {
+      "prompt": "You built this in under a day with Claude Code, and you also joked earlier about terrible vibecoders asking for CI. Does the README say how it was built — or does that undercut the thing you actually want people to notice, which is that it has 79 tests, real browser checks, and no dependencies?",
+      "why": "Provenance cuts both ways with the five people in the woods. To some it is the most interesting fact on the page and the reason they trust it is possible. To others 'built in a day by an AI' is the exact signal that makes them close the tab, and no amount of test count wins them back after that framing. You know that audience better than I do.",
+      "placeholder": "If it goes in, say where and how much of it.",
+      "options": [
+        "Say it plainly — it is part of what makes it interesting",
+        "Leave it out — let the engineering speak",
+        "Mention it late, after the evidence"
+      ],
+      "seq": 6,
+      "asked_at": "2026-08-14T21:14:07Z",
+      "answer": "Mention it late, after the evidence\n\nAlmost mention it in passing.\n\nI was literally joking when i included the  \"make no mistakes\" line in the initial specifications, but i also had planned on building a full CI suite for it as well.  IT's still just humorous to me that the off-hand comment ended up driving the product forward so effectively.",
+      "skipped": false,
+      "answered_at": "2026-08-14T21:16:27Z"
+    },
+    {
+      "prompt": "Last one. What would you hate to see on this page?",
+      "why": "I have enough to write it, so this is the guardrail question rather than another decision. Naming what would make you wince is faster than me drafting it and you reacting — and if anything else has occurred to you that I never asked about, this is the place to put it.",
+      "placeholder": "Words, claims, sections, formatting, tone — anything that would make you wince. Plus anything I missed.",
+      "options": [],
+      "seq": 7,
+      "asked_at": "2026-08-14T21:16:49Z",
+      "answer": "Nothing cheesy, no it's not x, it's y\" no broetry.\n\n... don't really want to see anything that reads like it's seeking validation - just want to deliver a queality overview and the story behind it.\n\nI think the biggeewst things is - i want people to engage with me, and with this, and fgeel like they are a part of the story just by being there",
+      "skipped": false,
+      "answered_at": "2026-08-14T21:19:30Z"
+    }
+  ]
+}

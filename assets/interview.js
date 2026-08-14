@@ -35,6 +35,37 @@
     });
   }
 
+  /* The waiting state is entered for two different reasons and must say which.
+     On load nothing has been said yet, so "reading your answer" would be a
+     claim about an answer that does not exist. */
+  var PROCESSING_COPY = {
+    start: {
+      primary: "Standing by…",
+      secondary: "Getting the first question ready.",
+      longWait: "Still getting started."
+    },
+    resume: {
+      primary: "Standing by…",
+      secondary: "Waiting for the next question.",
+      longWait: "Still waiting. The agent may be working on something else."
+    },
+    reading: {
+      primary: "Reading your answer…",
+      secondary: "Working out what to ask next.",
+      longWait: "Still reading. Longer answers take a moment."
+    }
+  };
+
+  function setProcessingCopy(kind) {
+    var copy = PROCESSING_COPY[kind] || PROCESSING_COPY.reading;
+    var primary = document.getElementById("ivProcPrimary");
+    var secA = document.getElementById("ivProcSecA");
+    var secB = document.getElementById("ivProcSecB");
+    if (primary) primary.textContent = copy.primary;
+    if (secA) secA.textContent = copy.secondary;
+    if (secB) secB.textContent = copy.longWait;
+  }
+
   function escapeHtml(s) {
     return String(s == null ? "" : s).replace(/[&<>"]/g, function (c) {
       return { "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c];
@@ -127,6 +158,7 @@
     };
     var seq = current.seq;
     current = null;
+    setProcessingCopy("reading");
     setState("processing");
 
     fetch("/answer", {
@@ -240,6 +272,7 @@
 
   (CFG.exchanges || []).forEach(appendHistory);
   dictationHint();
+  setProcessingCopy(after > 0 ? "resume" : "start");
   setState("processing");
   poll();
 })();

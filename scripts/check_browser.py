@@ -213,6 +213,7 @@ setTimeout(function () {
   log("state_lost", active("stateLost"));
   log("history_count", document.querySelectorAll(".iv-exchange").length);
   log("prompt_text", (document.getElementById("ivPrompt").textContent || "").slice(0, 24));
+  log("wait_copy", (document.getElementById("ivProcPrimary").textContent || "").slice(0, 8));
   var pre = document.createElement("pre");
   pre.textContent = "\\n@@" + out.join("\\n@@") + "\\n";
   document.body.appendChild(pre);
@@ -381,6 +382,18 @@ def check_interview(chrome: str) -> int:
             (waiting.get("prompt_text"), "Still thinking?", "the prompt is rendered"),
         ]
 
+        # On load nothing has been answered, so the waiting copy must not
+        # claim to be reading one.
+        booting = run_interview_case(chrome, {"polls": [{"waiting": True}]}, 700, tmp)
+        expectations += [
+            (booting.get("wait_copy"), "Standing", "the first wait says standing by, not reading"),
+            (booting.get("state_processing"), "true", "the page waits rather than showing nothing"),
+        ]
+        # ...and once an answer is sent, it does say it is reading.
+        expectations += [
+            (flow.get("wait_copy"), "Reading", "after answering, the wait says reading"),
+        ]
+
         # The agent dies. The page must say so rather than animate forever.
         lost = run_interview_case(chrome, {"failEverything": True}, 14000, tmp)
         expectations += [
@@ -455,7 +468,7 @@ def main() -> int:
 
     interview_failures = check_interview(chrome)
     failures += interview_failures
-    ran += 11
+    ran += 14
 
     print()
     if failures:

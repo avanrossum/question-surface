@@ -228,10 +228,10 @@ def interview_page(record: dict) -> str:
         </div>
       </div>
       <div class="iv-copy" role="status" aria-live="polite">
-        <p class="iv-primary">Reading your answer&hellip;</p>
+        <p class="iv-primary" id="ivProcPrimary">Standing by&hellip;</p>
         <div class="iv-secstack">
-          <p class="iv-secondary iv-sec-a">Working out what to ask next.</p>
-          <p class="iv-secondary iv-sec-b">Still reading. Longer answers take a moment.</p>
+          <p class="iv-secondary iv-sec-a" id="ivProcSecA">Getting the first question ready.</p>
+          <p class="iv-secondary iv-sec-b" id="ivProcSecB">Still getting started.</p>
         </div>
       </div>
     </div>
