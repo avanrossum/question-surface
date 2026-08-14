@@ -4,6 +4,23 @@ Semver. Newest first. The tool carries its own version because questionnaires au
 
 ---
 
+## 1.3.0 — 2026-08-14
+
+### Added
+
+- **Interview mode.** `qsurface interview open|ask|close|list` runs a conversation instead of a form: one question at a time, each written by the agent after reading the previous answer. `open` leaves a detached server and returns, `ask` pushes one question and blocks for its answer, `close` finalises the transcript. The skill governs the conduct — expert interviewer in a stated or inferred domain, following the thread, asking for the concrete, stopping when it has what it needs rather than at a count.
+- **Crash-safe transcripts.** The transcript pair is rewritten after every answer, not only at close, so an interview interrupted halfway still leaves everything said so far. `qsurface show` reads an interview transcript as well as a questionnaire response.
+- **A dictation nudge** on interview answers, pointing at the operating system's own dictation (microphone key on macOS, `Win+H` on Windows). Deliberately not the Web Speech API, which sends audio to a recognition service and would break the loopback-only constraint.
+- **Stale-session reporting** in `qsurface doctor`, since a dead agent can leave a session record pointing at nothing.
+
+### Fixed
+
+- **The interview client could busy-loop.** Its long-poll re-issued immediately on return, which is paced only by the server holding the connection for ~20s. Anything answering a poll immediately — a proxy, a shorter server timeout — would have spun the loop as fast as the event loop allowed. There is now a floor between polls regardless of what the server does. Found by the browser checks, which hung a headless Chrome outright.
+
+### Notes
+
+- The interview page holds four states and shows exactly one: asking, processing, done, and lost contact. The last exists because an agent that dies must not leave the respondent watching an animation forever; the page says so after repeated poll failures.
+
 ## 1.2.0 — 2026-08-14
 
 ### Added

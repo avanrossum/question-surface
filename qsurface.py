@@ -21,7 +21,11 @@ import argparse
 import json
 import os
 import shutil
+import socket
+import subprocess
 import sys
+import time
+import urllib.error
 import webbrowser
 from pathlib import Path
 
@@ -31,6 +35,7 @@ sys.path.insert(0, str(ROOT))
 from qsurface import __version__  # noqa: E402
 from qsurface import browser  # noqa: E402
 from qsurface import config as config_mod  # noqa: E402
+from qsurface import interview  # noqa: E402
 from qsurface import paths  # noqa: E402
 from qsurface import render as render_mod  # noqa: E402
 from qsurface import server as server_mod  # noqa: E402
@@ -38,18 +43,26 @@ from qsurface import spec as spec_mod  # noqa: E402
 from qsurface import store  # noqa: E402
 
 
-def resolve(reference: str) -> Path:
-    """Resolve a questionnaire id or path to a spec file."""
+def find_spec(reference: str) -> Path | None:
+    """Locate a questionnaire spec, or None. Interviews have no spec file."""
     candidate = Path(reference)
     if candidate.suffix == ".json" and candidate.exists():
         return candidate
-    searched = paths.search_path()
-    for directory in searched:
+    for directory in paths.search_path():
         for option in (directory / f"{reference}.json", directory / reference):
             if option.exists():
                 return option
     if candidate.with_suffix(".json").exists():
         return candidate.with_suffix(".json")
+    return None
+
+
+def resolve(reference: str) -> Path:
+    """Resolve a questionnaire id or path to a spec file."""
+    found = find_spec(reference)
+    if found:
+        return found
+    searched = paths.search_path()
     looked = "\n".join(f"         {d}/" for d in searched)
     raise SystemExit(
         f"error: no questionnaire {reference!r}\n"
@@ -194,13 +207,22 @@ def cmd_list(args) -> int:
 
 
 def cmd_show(args) -> int:
-    path = resolve(args.questionnaire)
-    spec = spec_mod.load(path)
-    directory = store.response_dir(paths.responses_dir(), spec["id"])
+    # An interview transcript has no questionnaire behind it, so fall back to
+    # the reference as a bare id rather than insisting on a spec file.
+    spec_path = find_spec(args.questionnaire)
+    identifier = args.questionnaire
+    if spec_path:
+        identifier = spec_mod.load(spec_path)["id"]
+
+    directory = store.response_dir(paths.responses_dir(), identifier)
     files = sorted(directory.glob("*.json")) if directory.exists() else []
     files = [f for f in files if f.name != store.DRAFT_NAME]
     if not files:
-        print(f"no responses yet for {spec['id']}")
+        if not spec_path:
+            raise SystemExit(
+                f"error: no questionnaire or interview {args.questionnaire!r}"
+            )
+        print(f"no responses yet for {identifier}")
         return 1
 
     latest = files[-1]
@@ -217,6 +239,22 @@ def cmd_show(args) -> int:
 
     data = json.loads(latest.read_text(encoding="utf-8"))
     counts = data["counts"]
+
+    if data.get("kind") == "interview":
+        print(f"{data['title']}  ({latest.name})")
+        print(f"  respondent {data['respondent'] or '(unstated)'}")
+        if data.get("domain"):
+            print(f"  conducted as {data['domain']}")
+        print(
+            f"  {counts['answered']} answered · {counts['skipped']} skipped "
+            f"of {counts['asked']} asked"
+        )
+        if not data.get("ended_at"):
+            print("  still in progress — this transcript is not final")
+        print(f"  json     {latest}")
+        print(f"  markdown {latest.with_suffix('.md')}")
+        return 0
+
     print(f"{data['title']}  ({latest.name})")
     print(f"  respondent {data['respondent'] or '(unstated)'}")
     print(
@@ -392,9 +430,153 @@ def cmd_doctor(args) -> int:
         chrome or "optional — only needed to run scripts/check_browser.py",
     )
 
+    # A dead agent can leave a session file behind pointing at nothing.
+    sessions = interview.list_sessions()
+    stale = [s for s in sessions if not interview.health(s)]
+    if sessions:
+        check(
+            not stale,
+            f"{len(sessions)} interview(s) open, {len(stale)} stale",
+            ""
+            if not stale
+            else "clear with: "
+            + ", ".join(f"qsurface interview close {s['id']}" for s in stale),
+        )
+
     print()
     print("all good" if not problems else f"{problems} thing(s) need attention")
     return 0 if not problems else 1
+
+
+def cmd_interview_open(args) -> int:
+    existing = interview.session_file(args.interview)
+    if existing.exists():
+        session = json.loads(existing.read_text(encoding="utf-8"))
+        if interview.health(session):
+            print(f"  already open → http://127.0.0.1:{session['port']}/")
+            return 0
+        existing.unlink(missing_ok=True)  # stale record from a dead server
+
+    # Pick a free port here so the parent knows the URL without waiting on the
+    # child to report one back.
+    with socket.socket() as probe:
+        probe.bind(("127.0.0.1", 0))
+        port = probe.getsockname()[1]
+
+    record = interview.new_record(
+        args.interview, args.title or args.interview, args.domain or "", port
+    )
+    interview.write_session(record)
+
+    log_path = interview.sessions_dir() / f"{args.interview}.log"
+    with open(log_path, "ab") as log:
+        child = subprocess.Popen(
+            [sys.executable, str(ROOT / "qsurface.py"), "interview", "_serve",
+             args.interview],
+            stdout=log,
+            stderr=log,
+            start_new_session=True,
+        )
+    record["pid"] = child.pid
+    interview.write_session(record)
+
+    url = f"http://127.0.0.1:{port}/"
+    deadline = time.time() + 10
+    while time.time() < deadline:
+        if interview.health(record):
+            break
+        if child.poll() is not None:
+            print(f"error: the interview server exited immediately — see {log_path}",
+                  file=sys.stderr)
+            return 1
+        time.sleep(0.15)
+    else:
+        print(f"error: the interview server did not come up — see {log_path}",
+              file=sys.stderr)
+        return 1
+
+    if not args.no_open:
+        webbrowser.open(url)
+    print(f"  Interview open → {url}")
+    print(f"  {record['title']}")
+    print("  Ask the first question with:")
+    print(f"    qsurface interview ask {args.interview} --prompt \"...\"")
+    return 0
+
+
+def cmd_interview_serve(args) -> int:
+    """Internal: the detached server process."""
+    interview.serve(interview.read_session(args.interview))
+    return 0
+
+
+def cmd_interview_ask(args) -> int:
+    session = interview.read_session(args.interview)
+    if not interview.health(session):
+        print("error: that interview is not running — reopen it", file=sys.stderr)
+        return 1
+
+    question = {"prompt": args.prompt, "why": args.why or "",
+                "placeholder": args.placeholder or "", "options": args.option or []}
+    minutes = args.timeout if args.timeout is not None else config_mod.get(
+        "timeout_minutes"
+    )
+    seconds = (minutes * 60) if minutes else None
+
+    try:
+        result = interview.control(
+            session,
+            "/control/ask",
+            {"question": question, "timeout": seconds},
+            # Outlast the server's own wait so the server decides the timeout.
+            timeout=(seconds + 30) if seconds else None,
+        )
+    except (urllib.error.URLError, OSError) as exc:
+        print(f"error: lost contact with the interview server — {exc}", file=sys.stderr)
+        return 1
+
+    if not result.get("ok"):
+        print("no answer — the interview timed out or was closed", file=sys.stderr)
+        return 1
+
+    answer = result["answer"]
+    if args.text:
+        print("" if answer.get("skipped") else answer.get("answer", ""))
+    else:
+        print(json.dumps(answer, indent=2, ensure_ascii=False))
+    return 0
+
+
+def cmd_interview_close(args) -> int:
+    session = interview.read_session(args.interview)
+    if not interview.health(session):
+        interview.session_file(args.interview).unlink(missing_ok=True)
+        print("that interview was not running; cleared its session file")
+        return 0
+    result = interview.control(
+        session, "/control/close", {"summary": args.summary or ""}, timeout=20
+    )
+    written = result.get("transcript") or {}
+    print("  Interview closed.")
+    if written:
+        print(f"    json      {written.get('json', '')}")
+        print(f"    markdown  {written.get('markdown', '')}")
+    return 0
+
+
+def cmd_interview_list(args) -> int:
+    sessions = interview.list_sessions()
+    if not sessions:
+        print("no interviews open")
+        return 0
+    for session in sessions:
+        alive = interview.health(session)
+        state = (
+            f"running · {alive['answered']} answered" if alive else "NOT RUNNING (stale)"
+        )
+        print(f"  {session['id']:<24} :{session['port']}  {state}")
+        print(f"  {'':<24} {session['title']}")
+    return 0
 
 
 def cmd_archive(args) -> int:
@@ -480,6 +662,48 @@ def main(argv: list[str] | None = None) -> int:
     p = sub.add_parser("archive", help="retire a questionnaire, keeping its responses")
     p.add_argument("questionnaire")
     p.set_defaults(func=cmd_archive)
+
+    p = sub.add_parser(
+        "interview",
+        help="ask one question at a time, deciding each from the last answer",
+    )
+    iv = p.add_subparsers(dest="interview_command", required=True)
+
+    s = iv.add_parser("open", help="start an interview and open the browser")
+    s.add_argument("interview")
+    s.add_argument("--title")
+    s.add_argument(
+        "--domain",
+        help="the expertise the interview is conducted with, shown to the respondent",
+    )
+    s.add_argument("--no-open", action="store_true")
+    s.set_defaults(func=cmd_interview_open)
+
+    s = iv.add_parser("ask", help="ask one question and wait for the answer")
+    s.add_argument("interview")
+    s.add_argument("--prompt", required=True)
+    s.add_argument("--why", help="why you are asking, shown under the question")
+    s.add_argument("--placeholder")
+    s.add_argument(
+        "--option",
+        action="append",
+        help="a suggested answer, offered as a chip; repeatable",
+    )
+    s.add_argument("--timeout", type=int, default=None, metavar="MINUTES")
+    s.add_argument("--text", action="store_true", help="print the answer text only")
+    s.set_defaults(func=cmd_interview_ask)
+
+    s = iv.add_parser("close", help="finish the interview and write the transcript")
+    s.add_argument("interview")
+    s.add_argument("--summary", help="a closing note shown to the respondent")
+    s.set_defaults(func=cmd_interview_close)
+
+    s = iv.add_parser("list", help="show open interviews")
+    s.set_defaults(func=cmd_interview_list)
+
+    s = iv.add_parser("_serve", help=argparse.SUPPRESS)
+    s.add_argument("interview")
+    s.set_defaults(func=cmd_interview_serve)
 
     args = parser.parse_args(argv)
     try:

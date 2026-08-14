@@ -8,6 +8,8 @@
 
 Question Surface is a local web form an agent builds on demand, serves on loopback, and shuts down the moment you submit. The answers land on disk as JSON your agent reads directly, and as markdown you can commit next to the code the decisions are about.
 
+It also does [interviews](#interview-mode) — one question at a time, each one written after reading your last answer.
+
 ![The form, mid-completion](docs/images/form-light.png)
 
 ---
@@ -120,6 +122,30 @@ Nine question types — single, multi, ranked, scale, text, longtext, number, da
 
 ---
 
+## Interview mode
+
+The form is right when the agent already knows every question. When each answer should determine the next one, ask for an interview instead:
+
+> "I'd like to write a post about the outage. Interview me for it, so I capture what actually happened."
+
+One question at a time. You answer, the agent reads it, and the next question comes from what you said — not from a list written before the conversation started.
+
+![Interview mode](docs/images/interview.png)
+
+```bash
+qsurface interview open outage --title "Outage retrospective" --domain "incident review"
+qsurface interview ask outage --prompt "What broke first?" --why "symptom before cause"
+qsurface interview close outage
+```
+
+`open` returns immediately and leaves a detached server. Each `ask` blocks until you answer, then prints the answer to the agent, which writes the next question. The transcript is written after **every** answer, so an interview that gets interrupted still leaves everything said so far.
+
+The skill instructs the agent to conduct it as an expert interviewer in a stated or inferred domain: follow the interesting thread, ask for the concrete when handed an abstraction, notice contradictions, and stop when it has what it needs rather than when a count runs out.
+
+**On dictation.** Speaking an answer suits an interview better than typing one, so the page nudges you toward the dictation already built into your operating system — the microphone key on macOS, `Win+H` on Windows. Not the Web Speech API, which ships your audio to a recognition service and would break the loopback-only rule this tool is built on.
+
+---
+
 ## The gate
 
 **Five or more questions go to the surface. Four or fewer can be asked in chat.** Also use it below that count when the answers would benefit from exposition, real answer choices, or open-ended interaction — two genuinely hard forks belong here, four easy questions don't.
@@ -178,8 +204,8 @@ These are load-bearing and not up for negotiation in a PR:
 ## Tests
 
 ```bash
-python3 -m unittest discover -s tests -t .   # 60 tests, under a second
-python3 scripts/check_browser.py             # 17 client-side checks in a real browser
+python3 -m unittest discover -s tests -t .   # 79 tests, about a second
+python3 scripts/check_browser.py             # 24 client-side checks in a real browser
 ```
 
 The browser checks cover `assets/app.js`, which the Python suite cannot reach — both bugs found in the first review lived there. They drive headless Chrome if one is installed and skip cleanly if not, rather than pulling in a JavaScript toolchain and breaking the no-build-step constraint. CI runs the suite on Python 3.9 through 3.13 and the browser checks with `--require`.

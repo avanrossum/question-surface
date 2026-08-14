@@ -153,6 +153,101 @@ def render(
 """
 
 
+def interview_page(record: dict) -> str:
+    """The one-question-at-a-time page.
+
+    Four states live in the document at once and exactly one is shown, so a
+    transition never waits on a network round trip to have something to
+    display. `app.css` is inlined for the palette and buttons; everything
+    interview-specific is in `interview.css`.
+    """
+    bootstrap = {
+        "id": record["id"],
+        "answered": len(record.get("exchanges", [])),
+        "exchanges": [
+            {
+                "prompt": e.get("prompt", ""),
+                "answer": e.get("answer", ""),
+                "skipped": bool(e.get("skipped")),
+            }
+            for e in record.get("exchanges", [])
+        ],
+    }
+    meta = [f"Answering as {html.escape(record.get('respondent') or 'you')}"]
+    if record.get("domain"):
+        meta.append(html.escape(record["domain"]))
+
+    return f"""<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>{html.escape(record["title"])}</title>
+<style>{_asset("app.css")}
+{_asset("interview.css")}</style>
+</head>
+<body>
+<div class="iv-layout">
+  <header class="iv-head">
+    <div class="iv-kicker">Interview</div>
+    <h1>{html.escape(record["title"])}</h1>
+    <div class="iv-meta">{"".join(f"<span>{part}</span>" for part in meta)}</div>
+  </header>
+
+  <div class="iv-history" id="ivHistory"></div>
+
+  <div class="iv-state" id="stateAsking">
+    <div class="iv-card">
+      <div class="iv-seq" id="ivSeq"></div>
+      <div class="iv-prompt" id="ivPrompt"></div>
+      <div class="iv-why" id="ivWhy" hidden></div>
+      <div class="iv-chips" id="ivChips" hidden></div>
+      <textarea class="iv-answer" id="ivAnswer" rows="6"></textarea>
+      <div class="iv-dictate" id="ivDictate" hidden>
+        <span></span><button type="button">dismiss</button>
+      </div>
+      <div class="iv-actions">
+        <span class="iv-hint"><kbd>⌘</kbd>/<kbd>Ctrl</kbd>+<kbd>Enter</kbd> to send</span>
+        <button type="button" class="btn btn-ghost" id="ivSkip">Skip</button>
+        <button type="button" class="btn btn-primary" id="ivSend">Send answer</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="iv-state" id="stateProcessing">
+    <div class="iv-card iv-processing">
+      <div class="iv-pulse"><span></span><span></span><span></span></div>
+      <div class="iv-processing-label">Reading your answer…</div>
+      <div class="iv-processing-sub">Working out what to ask next.</div>
+    </div>
+  </div>
+
+  <div class="iv-state" id="stateDone">
+    <div class="iv-card iv-done">
+      <h2>Interview complete</h2>
+      <div id="ivDoneBody">
+        <p>The transcript is saved. You can close this tab.</p>
+      </div>
+    </div>
+  </div>
+
+  <div class="iv-state" id="stateLost">
+    <div class="iv-card iv-lost">
+      <h2>Lost contact with the agent</h2>
+      <p>Every answer you already sent is saved to the transcript. The session
+      that was asking the questions has stopped responding, so nothing more is
+      coming — you can close this tab.</p>
+    </div>
+  </div>
+</div>
+
+<script>window.__IV__ = {json.dumps(bootstrap)};</script>
+<script>{_asset("interview.js")}</script>
+</body>
+</html>
+"""
+
+
 def _prior(prior: dict | None) -> str:
     """Read-only panel of what an earlier round already settled.
 

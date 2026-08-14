@@ -1,0 +1,194 @@
+/* Interview mode layout.
+   Reuses the token palette and button styles inlined from app.css; everything
+   here is specific to the one-question-at-a-time presentation. */
+
+.iv-layout {
+  max-width: 780px;
+  margin: 0 auto;
+  padding: 40px 28px 120px;
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+}
+
+.iv-head { margin-bottom: 30px; }
+.iv-kicker {
+  font-size: 11.5px;
+  letter-spacing: .09em;
+  text-transform: uppercase;
+  color: var(--accent);
+  font-weight: 600;
+  margin-bottom: 7px;
+}
+.iv-head h1 { font-size: 26px; line-height: 1.25; margin: 0 0 8px; letter-spacing: -.01em; }
+.iv-meta { font-size: 13px; color: var(--text-3); display: flex; gap: 14px; flex-wrap: wrap; }
+
+/* ---------- transcript so far ---------- */
+
+.iv-history { display: flex; flex-direction: column; gap: 18px; margin-bottom: 26px; }
+.iv-exchange { border-left: 2px solid var(--border-strong); padding-left: 16px; }
+.iv-exchange .iv-q {
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--text-2);
+  margin-bottom: 6px;
+}
+.iv-exchange .iv-a {
+  font-size: 14.5px;
+  color: var(--text);
+  white-space: pre-wrap;
+  line-height: 1.6;
+}
+.iv-exchange.is-skipped .iv-a { color: var(--text-3); font-style: italic; }
+
+/* ---------- the live card ---------- */
+
+.iv-card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow);
+  padding: 24px;
+}
+
+.iv-seq {
+  font-family: var(--mono);
+  font-size: 12px;
+  color: var(--text-3);
+  margin-bottom: 10px;
+}
+.iv-prompt {
+  font-size: 20px;
+  line-height: 1.4;
+  font-weight: 600;
+  margin-bottom: 10px;
+  letter-spacing: -.005em;
+}
+.iv-why {
+  font-size: 14px;
+  color: var(--text-2);
+  line-height: 1.55;
+  margin-bottom: 16px;
+  max-width: 62ch;
+}
+
+.iv-answer {
+  width: 100%;
+  font: inherit;
+  font-size: 15px;
+  line-height: 1.6;
+  padding: 13px 15px;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  background: var(--surface-2);
+  color: var(--text);
+  resize: vertical;
+  min-height: 130px;
+}
+.iv-answer:focus { outline: 2px solid var(--accent); outline-offset: -1px; }
+
+.iv-chips { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 14px; }
+.iv-chip {
+  font: inherit;
+  font-size: 13.5px;
+  padding: 7px 13px;
+  border: 1px solid var(--border-strong);
+  border-radius: 999px;
+  background: var(--surface-2);
+  color: var(--text);
+  cursor: pointer;
+}
+.iv-chip:hover { border-color: var(--accent); color: var(--accent); }
+
+.iv-actions {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-top: 15px;
+  flex-wrap: wrap;
+}
+.iv-hint { font-size: 12px; color: var(--text-3); margin-right: auto; }
+.iv-hint kbd {
+  font-family: var(--mono);
+  font-size: 11px;
+  border: 1px solid var(--border-strong);
+  border-bottom-width: 2px;
+  border-radius: 4px;
+  padding: 1px 5px;
+  background: var(--surface-2);
+}
+
+/* ---------- dictation nudge ---------- */
+
+.iv-dictate {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  font-size: 12.5px;
+  color: var(--text-3);
+  background: var(--surface-2);
+  border: 1px dashed var(--border-strong);
+  border-radius: 7px;
+  padding: 8px 12px;
+  margin-top: 12px;
+}
+.iv-dictate button {
+  font: inherit;
+  font-size: 12px;
+  background: none;
+  border: 0;
+  color: var(--text-3);
+  cursor: pointer;
+  margin-left: auto;
+  text-decoration: underline;
+}
+
+/* ---------- states ---------- */
+
+.iv-state { display: none; }
+.iv-state.is-active { display: block; }
+
+/* Processing: the respondent spends every gap here, so it has to read as
+   "thinking", not as "hung". Replaceable as a self-contained block. */
+.iv-processing { text-align: center; padding: 46px 24px; }
+.iv-pulse {
+  display: inline-flex;
+  gap: 7px;
+  margin-bottom: 18px;
+}
+.iv-pulse span {
+  width: 9px;
+  height: 9px;
+  border-radius: 50%;
+  background: var(--accent);
+  opacity: .3;
+  animation: iv-bounce 1.25s ease-in-out infinite;
+}
+.iv-pulse span:nth-child(2) { animation-delay: .16s; }
+.iv-pulse span:nth-child(3) { animation-delay: .32s; }
+
+@keyframes iv-bounce {
+  0%, 70%, 100% { opacity: .25; transform: translateY(0); }
+  35%           { opacity: 1;   transform: translateY(-6px); }
+}
+
+.iv-processing-label { font-size: 15px; color: var(--text-2); }
+.iv-processing-sub { font-size: 13px; color: var(--text-3); margin-top: 6px; }
+
+@media (prefers-reduced-motion: reduce) {
+  .iv-pulse span { animation: none; opacity: .6; }
+}
+
+.iv-done { text-align: center; padding: 40px 24px; }
+.iv-done h2 { font-size: 20px; margin: 0 0 10px; }
+.iv-done p { color: var(--text-2); font-size: 14px; margin: 0 0 8px; }
+.iv-done code { font-family: var(--mono); font-size: 12.5px; word-break: break-all; }
+
+.iv-lost { text-align: center; padding: 40px 24px; }
+.iv-lost h2 { font-size: 18px; margin: 0 0 10px; color: var(--warn); }
+.iv-lost p { color: var(--text-2); font-size: 14px; margin: 0 auto; max-width: 52ch; }
+
+@media (max-width: 640px) {
+  .iv-layout { padding: 26px 16px 90px; }
+  .iv-prompt { font-size: 18px; }
+}

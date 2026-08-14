@@ -178,6 +178,154 @@ CONDITIONAL = {
 }
 
 
+# The interview page talks to a server for everything, so the checks stub
+# fetch before the page's own script runs and drive it through each state.
+STUB_TEMPLATE = """
+<script>
+window.__STUB__ = %s;
+window.fetch = function (url, opts) {
+  var route = String(url);
+  var plan = window.__STUB__;
+  if (plan.failEverything) return Promise.reject(new Error("offline"));
+  var body;
+  if (route.indexOf("/answer") !== -1) {
+    body = { ok: true };
+  } else {
+    var seen = plan.pollCount = (plan.pollCount || 0) + 1;
+    body = plan.polls[Math.min(seen - 1, plan.polls.length - 1)];
+  }
+  return Promise.resolve({ json: function () { return Promise.resolve(body); } });
+};
+</script>
+"""
+
+REPORTER = """
+setTimeout(function () {
+  var out = [];
+  function log(k, v) { out.push(k + "=" + v); }
+  function active(id) {
+    var el = document.getElementById(id);
+    return el && el.classList.contains("is-active");
+  }
+  log("state_asking", active("stateAsking"));
+  log("state_processing", active("stateProcessing"));
+  log("state_done", active("stateDone"));
+  log("state_lost", active("stateLost"));
+  log("history_count", document.querySelectorAll(".iv-exchange").length);
+  log("prompt_text", (document.getElementById("ivPrompt").textContent || "").slice(0, 24));
+  var pre = document.createElement("pre");
+  pre.textContent = "\\n@@" + out.join("\\n@@") + "\\n";
+  document.body.appendChild(pre);
+}, %d);
+"""
+
+
+def interview_page_html() -> str:
+    from qsurface import interview  # noqa: PLC0415
+
+    record = interview.new_record("check", "Interview check", "systems design", 0)
+    return render.interview_page(record)
+
+
+# Answers the first question that appears, the way a respondent would.
+AUTO_ANSWER = """
+<script>
+(function () {
+  var tries = 0;
+  var timer = setInterval(function () {
+    var asking = document.getElementById("stateAsking");
+    if (asking && asking.classList.contains("is-active")) {
+      document.getElementById("ivAnswer").value = "the deploy drops them";
+      document.getElementById("ivSend").click();
+      clearInterval(timer);
+    }
+    if (++tries > 200) clearInterval(timer);
+  }, 40);
+})();
+</script>
+"""
+
+
+def run_interview_case(
+    chrome: str, plan: dict, settle_ms: int, tmp: Path, auto_answer: bool = False
+) -> dict:
+    html = interview_page_html()
+    html = html.replace("</head>", (STUB_TEMPLATE % json.dumps(plan)) + "</head>")
+    tail = (AUTO_ANSWER if auto_answer else "") + "<script>" + (REPORTER % settle_ms) + "</script>"
+    html = html.replace("</body>", tail + "</body>")
+    page = tmp / "interview.html"
+    page.write_text(html, encoding="utf-8")
+    dom = browser.dump_dom(page, chrome=chrome, budget_ms=settle_ms + 8000)
+
+    results: dict[str, str] = {}
+    for line in dom.splitlines():
+        idx = line.find("@@")
+        while idx != -1:
+            rest = line[idx + 2 :]
+            end = rest.find("<")
+            field = rest if end == -1 else rest[:end]
+            if "=" in field:
+                key, _, value = field.partition("=")
+                results[key.strip()] = value.strip()
+            idx = line.find("@@", idx + 2)
+    return results
+
+
+def check_interview(chrome: str) -> int:
+    """Drive the interview page through asking, done, and lost."""
+    failures = 0
+    print("\ninterview mode")
+
+    with tempfile.TemporaryDirectory() as tmp_name:
+        tmp = Path(tmp_name)
+
+        # A question arrives, is answered, and the interview ends.
+        flow = run_interview_case(
+            chrome,
+            {
+                "polls": [
+                    {"question": {"seq": 1, "prompt": "What broke first?",
+                                  "why": "symptom before solution", "options": []}},
+                    {"done": True, "summary": "thanks"},
+                ]
+            },
+            1500,
+            tmp,
+            auto_answer=True,
+        )
+        expectations = [
+            (flow.get("state_asking"), "false", "the question is cleared once answered"),
+            (flow.get("state_done"), "true", "a finished interview shows the wrap-up"),
+            (flow.get("history_count"), "1", "the answered exchange joins the transcript"),
+        ]
+
+        # A question arrives and nothing else does — the page must wait, visibly.
+        waiting = run_interview_case(
+            chrome, {"polls": [{"question": {"seq": 1, "prompt": "Still thinking?"}},
+                               {"waiting": True}]}, 600, tmp
+        )
+        expectations += [
+            (waiting.get("state_asking"), "true", "an unanswered question stays on screen"),
+            (waiting.get("prompt_text"), "Still thinking?", "the prompt is rendered"),
+        ]
+
+        # The agent dies. The page must say so rather than animate forever.
+        lost = run_interview_case(chrome, {"failEverything": True}, 14000, tmp)
+        expectations += [
+            (lost.get("state_lost"), "true", "a dead agent surfaces as lost contact"),
+            (lost.get("state_processing"), "false", "the processing state does not persist"),
+        ]
+
+    for actual, expected, description in expectations:
+        if actual == expected:
+            print(f"  ok    {description}")
+        else:
+            failures += 1
+            print(f"  FAIL  {description}")
+            print(f"        expected {expected!r}, got {actual!r}")
+    return failures
+
+
 def main() -> int:
     require = "--require" in sys.argv
     chrome = browser.find_chrome()
@@ -231,6 +379,10 @@ def main() -> int:
             failures += 1
             print(f"  FAIL  {description}")
             print(f"        {key}: expected {expected!r}, got {actual!r}")
+
+    interview_failures = check_interview(chrome)
+    failures += interview_failures
+    ran += 7
 
     print()
     if failures:

@@ -2,57 +2,16 @@
 
 Things deliberately not in the current release, with the reason. Decisions here came from the `ship-design` questionnaire (`.question-surface/responses/ship-design/`) unless noted.
 
-## Next: interview mode
+## Shipped since this file was written
 
-A second presentation for a different shape of conversation. The batch form is right when the agent already knows every question. It is wrong when each answer should determine the next one.
+**Interview mode** (v1.3.0). One question at a time, each written after reading the last answer, conducted as an expert interviewer in a stated or inferred domain. It brought the persistent-server model with it, as predicted: `interview open` leaves a detached server, `ask` blocks for one answer, `close` finalises. The transcript is written after every answer, so an interrupted interview still leaves a record.
 
-> "I'd like to write a post about X. Please interview me for this, so I capture real scenarios and communicate the point properly."
+Still open from that design:
 
-Also used for architecture and systems design, and for thinking through a complex problem out loud.
-
-### The interaction
-
-One question on screen at a time. The respondent answers, the page shows a processing state while the agent reads that answer and decides what to ask next, then the next question arrives. Repeat until the agent is satisfied it has what it needs, not until a fixed list is exhausted.
-
-```
-user asks for an interview
-  → agent opens the surface and asks its first question
-  → user answers
-  → page shows a processing state
-  → agent reads the answer, writes the next question
-  → repeat until the agent has enough
-  → transcript written as a response document
-```
-
-### Governance
-
-The agent conducts the interview **as an expert interviewer in a specific domain**, and where the domain is not stated, infers it from context. This is the part that separates a useful interview from a form asked slowly. An expert interviewer follows the interesting thread, asks for the concrete example when given an abstraction, and notices when an answer contradicts an earlier one. A generic agent asks the next question on its list.
-
-The skill should also say when to stop: when further questions would produce material the user has already covered, not when a counter runs out.
-
-### What it needs that does not exist yet
-
-This is the reason it is a roadmap item rather than a patch. The batch flow works because `serve` blocks once and exits on submit. An interview needs the server alive across many turns, with the agent in the loop between each one — which is the persistent-server model deliberately deferred in `ship-design`, and it comes back here on its own merits.
-
-Sketch:
-
-```bash
-qsurface interview open <id>            # starts the server, returns immediately
-qsurface interview ask <id> -q q.json   # pushes one question, blocks for the answer, prints it
-qsurface interview close <id>           # wrap-up screen, writes the transcript, shuts down
-```
-
-The page holds a long-poll or SSE connection so a pushed question appears without a reload, and shows the processing state whenever no question is pending. That state is a real design surface — it is where the respondent spends every gap in the conversation, and a dead-looking page reads as a hang. It also needs an honest failure mode: if the agent dies mid-interview, the page must say so rather than animating forever.
-
-The transcript is the response document, in interview order, with the questions that were actually asked. Because those questions were generated rather than authored, the record has to keep them — a transcript that only stores the answers is unreadable.
-
-### Voice
-
-Wanted as a value-add, not a requirement. Speaking an answer suits an interview far better than typing one.
-
-Not the Web Speech API: in Chrome it ships audio to Google's servers for recognition, which breaks the loopback-only constraint the whole tool is built on. Not Whisper either — that is a dependency, and a large one.
-
-The workable version is a nudge to the dictation already built into the operating system, which runs locally and costs nothing: detect the platform from the user agent and show the shortcut on a focused text field (macOS presses the microphone key or Fn twice; Windows is Win+H). Most people have it and do not know it is there. This could land on `longtext` fields before interview mode exists.
+- **Richer question types mid-interview.** Today an interview question is free text plus optional suggested chips. A scale or a ranking mid-conversation would sometimes be the right instrument.
+- **Resuming a closed interview.** A follow-up session that carries the previous transcript, the way `follows` works for questionnaires.
+- **The waiting state.** The current processing animation is a plain three-dot pulse. It is the screen the respondent sees in every gap, and it deserves a designed treatment.
+- **Dictation on questionnaire `longtext` fields.** The nudge exists in interview mode; the same hint would help on long-form form fields.
 
 ## Considered and deferred
 

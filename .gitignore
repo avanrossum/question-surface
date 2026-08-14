@@ -4,3 +4,6 @@ __pycache__/
 
 # Drafts are in-progress state, not a record. Submitted responses ARE tracked.
 .question-surface/responses/*/draft.json
+
+# Interview session state: a running server's port, pid and token.
+.question-surface/interviews/

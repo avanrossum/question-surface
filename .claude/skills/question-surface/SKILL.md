@@ -1,6 +1,6 @@
 ---
 name: question-surface
-description: Collect answers to a batch of questions at once using the local Question Surface web form instead of asking them serially in chat. Use whenever a task needs decisions, requirements, or clarifications from the user — architecture forks, scoping, discovery, requirements gathering, keep-vs-drop inventories, or any point where you are about to write a numbered list of questions into a chat message. Also use it for a smaller number of questions when the answers would benefit from real exposition, detailed answer choices, or open-ended interaction. Covers authoring the questionnaire spec, serving it, and consuming the answers. Mandatory at the configured gate, which defaults to five questions.
+description: Collect answers from the user through a local web surface instead of asking serially in chat. Two modes. Batch form — whenever a task needs decisions, requirements, or clarifications: architecture forks, scoping, discovery, requirements gathering, keep-vs-drop inventories, or any point where you are about to write a numbered list of questions into a chat message; also for fewer questions when the answers would benefit from real exposition, detailed answer choices, or open-ended interaction; mandatory at the configured gate, default five. Interview mode — whenever the user asks to be interviewed, or when each answer should determine the next question: drawing out material for writing, working through an architecture or systems-design problem, or thinking through a complex problem out loud. Covers authoring, serving, conducting, and consuming the answers.
 ---
 
 # Question Surface — batch question collection
@@ -47,6 +47,42 @@ A single blocking question. A quick yes/no. Anything where you should make the r
 - **Prefer `single`/`multi` over `longtext` where the option space is known.** Free text is for things you genuinely cannot enumerate. A questionnaire of twelve textareas is a homework assignment.
 - **Keep one questionnaire to one decision area.** Two unrelated areas are two questionnaires; a 60-question omnibus gets abandoned halfway.
 - **Say what is already decided.** Put it in the `intro` so the user knows what is not being reopened.
+
+## Interview mode
+
+**When the user asks to be interviewed, or when each answer should determine the next question, use interview mode instead of a form.** One question at a time, you read each answer before writing the next. Typical asks: "interview me for a post about X", working through an architecture problem out loud, or thinking through anything where the user is the source and you are drawing it out.
+
+The batch form is for when you already know every question. An interview is for when you don't, and shouldn't.
+
+### Conduct it as an expert interviewer
+
+**Adopt the mindset of an expert interviewer in a specific domain.** If the user names the domain, use it. If they don't, infer it from what they are trying to produce — a post about an outage is a technical-writing interview; a session on a data model is a systems-design interview. Pass it with `--domain`, both to state your stance and to record it in the transcript.
+
+What separates an interview from a form asked slowly:
+
+- **Follow the thread that opened.** If an answer contains something more interesting than your next planned question, ask about that instead.
+- **Ask for the concrete when you are given the abstract.** "It was slow" earns "slow doing what, and who noticed?" Specifics are the entire reason to interview someone.
+- **Notice contradictions and ask about them**, without being adversarial. Two answers that cannot both be true is the most valuable thing an interview surfaces.
+- **One question at a time.** Do not stack three questions into one prompt; that is a form with extra steps.
+- **Use `--why` to say what you are digging for.** It changes how much the person gives you.
+- **Stop when you have what you need**, not when a count runs out. Two more questions that produce material already covered is worse than stopping.
+
+### Workflow
+
+```bash
+qsurface interview open <id> --title "..." --domain "systems design"
+qsurface interview ask <id> --prompt "..." --why "..."     # blocks, prints the answer as JSON
+qsurface interview ask <id> --prompt "..."                 # ...informed by the last answer
+qsurface interview close <id> --summary "..."              # writes the transcript
+```
+
+`open` returns immediately, leaving a detached server. Each `ask` blocks until the answer comes back and prints it as JSON — `--text` prints just the answer text. `--option` adds suggested answers as chips the respondent can click to build on; repeat it for several.
+
+**Always `close`.** The transcript is written after every answer, so nothing is lost if you don't, but an unclosed session leaves a server running until it goes idle. `qsurface interview list` shows what is open.
+
+If `ask` exits non-zero, the user hasn't answered within the timeout or the session was closed. That means "still waiting", not "declined" — the answer box keeps their draft.
+
+Read the finished transcript with `qsurface show <id>`, or read the JSON directly for the exchange list.
 
 ## Follow-up rounds
 
