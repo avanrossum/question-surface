@@ -25,8 +25,16 @@ def serve(
     port: int = 8777,
     open_browser: bool = True,
     stay_open: bool = False,
+    timeout: float | None = None,
+    prior: dict | None = None,
 ) -> dict | None:
-    """Serve the questionnaire until it is submitted. Returns the written paths."""
+    """Serve the questionnaire until it is submitted.
+
+    Returns the written paths on submission, or None if the wait ended without
+    one — interrupted or timed out. A timeout writes no response: whatever was
+    filled in is already on disk as a draft, and a partial record that reads
+    like a decision is worse than no record at all.
+    """
     outcome: dict = {}
     done = threading.Event()
     respondent = store.detect_respondent()
@@ -42,7 +50,7 @@ def serve(
                 return
             draft = store.load_draft(responses_root, spec["id"])
             body = render.render(
-                spec, draft=draft, respondent=respondent
+                spec, draft=draft, respondent=respondent, prior=prior
             ).encode("utf-8")
             self._send(200, "text/html; charset=utf-8", body)
 
@@ -105,7 +113,7 @@ def serve(
             self.end_headers()
             self.wfile.write(body)
 
-    httpd = ThreadingHTTPServer(("127.0.0.1", port), Handler)
+    httpd = _bind(port, Handler)
     url = f"http://127.0.0.1:{httpd.server_port}/"
 
     thread = threading.Thread(target=httpd.serve_forever, daemon=True)
@@ -113,13 +121,19 @@ def serve(
 
     print(f"  Question Surface → {url}")
     print(f"  {spec['title']}")
-    print("  Waiting for submission… (Ctrl-C to stop)\n")
+    if httpd.server_port != port:
+        print(f"  (port {port} was busy — using {httpd.server_port})")
+    if timeout:
+        print(f"  Waiting for submission… (timeout {_duration(timeout)}, Ctrl-C to stop)\n")
+    else:
+        print("  Waiting for submission… (Ctrl-C to stop)\n")
 
     if open_browser:
         webbrowser.open(url)
 
+    submitted = False
     try:
-        done.wait()
+        submitted = done.wait(timeout)
     except KeyboardInterrupt:
         print("\n  Stopped. Draft (if any) is saved.")
         return None
@@ -131,4 +145,34 @@ def serve(
         httpd.shutdown()
         httpd.server_close()
 
+    if not submitted:
+        print(f"  Timed out after {_duration(timeout)} with no submission.")
+        print("  The draft is saved — re-serve to pick it up where it stopped.")
+        return None
+
     return outcome or None
+
+
+def _bind(port: int, handler) -> ThreadingHTTPServer:
+    """Bind the preferred port, falling back to any free one.
+
+    Two agents asking questions at once is a normal thing to happen, and the
+    second one failing with 'address already in use' is a worse outcome than
+    it serving on a different port — the URL is printed either way.
+    """
+    try:
+        return ThreadingHTTPServer(("127.0.0.1", port), handler)
+    except OSError:
+        return ThreadingHTTPServer(("127.0.0.1", 0), handler)
+
+
+def _duration(seconds: float | None) -> str:
+    if not seconds:
+        return "no limit"
+    if seconds < 60:
+        return f"{int(seconds)}s"
+    minutes = int(seconds // 60)
+    if minutes < 60:
+        return f"{minutes}m"
+    hours, rest = divmod(minutes, 60)
+    return f"{hours}h" if not rest else f"{hours}h{rest:02d}m"

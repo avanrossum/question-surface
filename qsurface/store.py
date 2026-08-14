@@ -285,7 +285,7 @@ def to_markdown(spec: dict, response: dict) -> str:
             # answers; printing it as "(no answer)" reads as one.
             if entry.get("skipped"):
                 continue
-            lines += [f"### {question['prompt']}", "", f"*{_format_value(entry)}*", ""]
+            lines += [f"### {question['prompt']}", "", f"*{format_value(entry)}*", ""]
             if entry.get("reordered") is False and not entry.get("unknown"):
                 lines += ["<sub>accepted the presented order</sub>", ""]
             if entry.get("notes"):
@@ -301,7 +301,8 @@ def to_markdown(spec: dict, response: dict) -> str:
     return "\n".join(lines)
 
 
-def _format_value(entry: dict) -> str:
+def format_value(entry: dict) -> str:
+    """One-line human rendering of an answer. Shared with the follow-up panel."""
     if entry.get("unknown"):
         return "Don't know — needs research"
     if entry.get("labels"):

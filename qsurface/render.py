@@ -17,6 +17,7 @@ import re
 from pathlib import Path
 
 from . import spec as spec_mod
+from . import store
 
 ASSETS = Path(__file__).resolve().parent.parent / "assets"
 
@@ -45,6 +46,7 @@ def render(
     draft: dict | None = None,
     standalone: bool = False,
     respondent: str = "",
+    prior: dict | None = None,
 ) -> str:
     """Render a full HTML document for the questionnaire."""
     questions = spec_mod.answerable_questions(spec)
@@ -77,6 +79,8 @@ def render(
             q["id"]: q["show_if"] for q in questions if q.get("show_if")
         },
     }
+
+    prior_html = _prior(prior)
 
     return f"""<!doctype html>
 <html lang="en">
@@ -114,6 +118,8 @@ def render(
       </div>
     </header>
 
+    {prior_html}
+
     <form id="qform">{sections_html}</form>
 
     <div class="submit-bar">
@@ -132,6 +138,38 @@ def render(
 </body>
 </html>
 """
+
+
+def _prior(prior: dict | None) -> str:
+    """Read-only panel of what an earlier round already settled.
+
+    A follow-up questionnaire whose respondent cannot see the previous answers
+    makes them reconstruct the decisions from memory, which is the failure this
+    tool exists to remove. Skipped and unanswered entries are left out — only
+    what was actually decided is worth restating.
+    """
+    if not prior or not prior.get("answers"):
+        return ""
+
+    rows = []
+    for entry in prior["answers"].values():
+        if entry.get("skipped") or entry.get("value") in (None, "", []):
+            if not entry.get("unknown"):
+                continue
+        rows.append(
+            f'<div class="prior-row"><div class="prior-q">{fmt(entry["prompt"])}</div>'
+            f'<div class="prior-a">{fmt(store.format_value(entry))}</div></div>'
+        )
+    if not rows:
+        return ""
+
+    when = html.escape(str(prior.get("submitted_at", "")))
+    title = html.escape(str(prior.get("title", prior.get("questionnaire_id", ""))))
+    return (
+        '<details class="prior" open><summary>Already decided'
+        f' — <span class="prior-src">{title}, {when}</span></summary>'
+        f'<div class="prior-body">{"".join(rows)}</div></details>'
+    )
 
 
 def _section(section: dict, index: int) -> str:

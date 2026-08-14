@@ -8,45 +8,78 @@ Nothing in it is domain-specific. It is a spec format, a renderer, and a loopbac
 
 ---
 
-## Governance
+## Install
 
-**Five or more questions go through this surface. Four or fewer can be asked in chat.** This is a gate, not a suggestion — see the `question-surface` skill in `.claude/skills/` and the Question Surface section of `CLAUDE.md`.
+```bash
+git clone https://github.com/avanrossum/question-surface.git
+cd question-surface
+./install.sh
+```
+
+That does three things, each of which it will tell you about and none of which it does silently:
+
+1. Symlinks `qsurface` into `~/.local/bin`.
+2. Symlinks the `question-surface` skill into `~/.claude/skills/`, so every Claude Code session in every project can see it.
+3. Offers to add one line to your global `~/.claude/CLAUDE.md` carrying the current gate. It asks first, and `./install.sh --uninstall` removes everything it added.
+
+Symlinks rather than copies, so `git pull` updates the tool and the skill together. Requires Python 3.9+ and nothing else. Run `qsurface doctor` any time to see what is and isn't wired up.
+
+---
+
+## The gate
+
+**Five or more questions go through the surface; four or fewer can be asked in chat.** Also use it below that count when the answers would benefit from exposition, detailed answer choices, or open-ended interaction — two genuinely hard forks belong here, four easy ones don't.
+
+The count is per-user:
+
+```bash
+qsurface config gate 3     # then re-run ./install.sh to refresh the pointer line
+qsurface config            # show current settings
+```
+
+A skill is static text an agent reads rather than a program that can look a setting up, which is why the installer writes the number into your global `CLAUDE.md` — without that line an agent assumes the default.
 
 ---
 
 ## Usage
 
 ```bash
-./qsurface.py list                        # questionnaires + response counts
-./qsurface.py new my-topic --title "..."  # scaffold a new questionnaire
-./qsurface.py validate my-topic           # check a spec without serving it
-./qsurface.py serve my-topic              # open the form, block until submitted
-./qsurface.py show my-topic               # summarize the latest response
-./qsurface.py render my-topic -o out.html # standalone preview, no server
+qsurface list                        # questionnaires + response counts
+qsurface new my-topic --title "..."  # scaffold a new questionnaire
+qsurface validate my-topic           # check a spec without serving it
+qsurface serve my-topic              # open the form, block until submitted
+qsurface show my-topic               # summarize the latest response
+qsurface show my-topic --open        # open the markdown render for reading
+qsurface archive my-topic            # retire it, keeping its responses
+qsurface render my-topic -o out.html # standalone preview, no server
+qsurface doctor                      # check the install
 ```
 
-`serve` binds to `127.0.0.1`, opens a browser, and exits once the form is submitted, printing the paths it wrote. Add `--stay-open` to keep serving for multiple respondents, `--no-open` to suppress the browser, `--port` to move off 8777.
+`serve` binds to `127.0.0.1`, opens a browser, and exits once the form is submitted, printing the paths it wrote. If the preferred port is busy it takes a free one and says so, so two agents can ask questions at the same time. `--stay-open` keeps serving for multiple respondents, `--no-open` suppresses the browser, `--port` moves off 8777.
 
-**Answers are never lost.** Every keystroke persists to `localStorage`, and a debounced save writes `responses/<id>/draft.json` server-side. Closing the tab, restarting the server, or a browser crash all resume where they left off. The draft is deleted on submit.
+**It stops waiting eventually.** `--timeout MINUTES` (default 120, `0` waits forever) ends the wait if nobody submits. On timeout it writes no response and exits non-zero — the draft is saved, so re-serving resumes where the respondent stopped. A partial record that reads like a decision is worse than no record.
+
+**Answers are never lost.** Every keystroke persists to `localStorage`, and a debounced save writes a server-side draft. Closing the tab, restarting the server, or a browser crash all resume where they left off. The draft is deleted on submit.
 
 ---
 
 ## Where things live
 
+Questionnaires and responses live in **the project you are working in**, not next to the tool:
+
 ```
-question-surface/
-├── qsurface.py            # CLI
-├── qsurface/              # spec validation, rendering, storage, server
-├── assets/                # app.css + app.js, inlined into the rendered page
-├── questionnaires/<id>.json   # authored question sets — tracked
-├── responses/<id>/
-│   ├── <timestamp>.json   # the machine record — this is what the agent reads
-│   ├── <timestamp>.md     # human/git-diffable render of the same answers
-│   └── draft.json         # in-progress, deleted on submit
-└── tests/
+<your project>/
+└── .question-surface/
+    ├── questionnaires/<id>.json   # authored question sets — tracked
+    └── responses/<id>/
+        ├── <timestamp>.json       # the machine record — this is what the agent reads
+        ├── <timestamp>.md         # human/git-diffable render of the same answers
+        └── draft.json             # in-progress, deleted on submit, not tracked
 ```
 
-Responses are tracked in git. They are decisions, and a decision that only exists in a chat transcript is a decision nobody can find later.
+A decision belongs in the repository it is about, where it can be reviewed alongside the change it gates. Responses are meant to be committed; the tool never stages them itself. The project root is the nearest enclosing repository, so it does not matter which subdirectory you run from. `QSURFACE_PROJECT` overrides it.
+
+The tool's own directory holds the CLI, the package, the assets, and the bundled `example` questionnaire, which is readable from any project.
 
 ---
 
@@ -60,6 +93,8 @@ Responses are tracked in git. They are decisions, and a decision that only exist
   "title": "My topic — object model decisions",
   "intro": "What this questionnaire decides and what it unblocks.",
   "context_docs": ["docs/DISCOVERY.md"],
+  "spec_version": 1,
+  "follows": "an-earlier-questionnaire-id",
   "sections": [
     {
       "title": "Object model",
@@ -69,6 +104,8 @@ Responses are tracked in git. They are decisions, and a decision that only exist
   ]
 }
 ```
+
+`spec_version` is optional and defaults to `1`; a questionnaire declaring a version newer than the installed tool understands is refused rather than half-read. `follows` is optional — naming an earlier questionnaire renders a read-only panel of what that round settled, so a second pass does not make the respondent reconstruct it from memory.
 
 ### Question types
 
@@ -165,7 +202,10 @@ The response document:
 ## Tests
 
 ```bash
-python3 -m unittest discover -s tests -t .
+python3 -m unittest discover -s tests -t .   # 60 tests, under a second
+python3 scripts/check_browser.py             # client-side checks in a real browser
 ```
 
-30 tests covering spec validation, response building, conditional visibility, persistence, and rendering.
+The Python suite covers spec validation, response building, conditional visibility, persistence, rendering, path resolution, config, and follow-up panels.
+
+The browser checks cover `assets/app.js`, which the Python suite cannot reach — conditional show/hide and the residue it must clear, rank seeding, progress counting, and required-field blocking. They drive headless Chrome (or Chromium, or Edge) if one is installed and skip cleanly if not, rather than pulling in a JavaScript toolchain and breaking the no-build-step constraint. `--require` turns a missing browser into a failure, which is what CI uses.

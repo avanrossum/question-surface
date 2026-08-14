@@ -1,0 +1,58 @@
+{
+  "questionnaire_id": "naming",
+  "title": "Question Surface — what it's called",
+  "respondent": "Alexander van Rossum",
+  "submitted_at": "2026-08-14T19:03:19Z",
+  "counts": {
+    "total": 3,
+    "answered": 2,
+    "unknown": 0,
+    "unanswered": 1,
+    "skipped": 1
+  },
+  "flagged_unknown": [],
+  "unanswered": [
+    "naming-notes"
+  ],
+  "skipped": [
+    "cli-name"
+  ],
+  "answers": {
+    "tool-name": {
+      "prompt": "What is this called?",
+      "type": "single",
+      "value": "question-surface",
+      "unknown": false,
+      "notes": "... it really does work, doesn't it?  Concern: unless you know what it is, you don't really know what it is by the name alone.  Though i'm not sure that there is much you could do about that.",
+      "labels": [
+        "**question-surface** — keep it, CLI stays `qsurface`"
+      ],
+      "recommended": "question-surface",
+      "followed_recommendation": true
+    },
+    "cli-name": {
+      "prompt": "If the project gets renamed, does the command follow it?",
+      "type": "single",
+      "value": null,
+      "unknown": false,
+      "skipped": true
+    },
+    "project-dir": {
+      "prompt": "What does the tool create inside a project that uses it?",
+      "type": "single",
+      "value": "dot-name",
+      "unknown": false,
+      "labels": [
+        "A hidden directory named for the tool — `.question-surface/`"
+      ],
+      "recommended": "dot-name",
+      "followed_recommendation": true
+    },
+    "naming-notes": {
+      "prompt": "Any other name you'd rather use?",
+      "type": "longtext",
+      "value": null,
+      "unknown": false
+    }
+  }
+}

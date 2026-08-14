@@ -3,4 +3,4 @@ __pycache__/
 .DS_Store
 
 # Drafts are in-progress state, not a record. Submitted responses ARE tracked.
-responses/*/draft.json
+.question-surface/responses/*/draft.json

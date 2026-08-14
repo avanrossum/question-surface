@@ -1,0 +1,117 @@
+{
+  "id": "naming",
+  "title": "Question Surface — what it's called",
+  "intro": "The two items you flagged for research on the ship-design form: the repository name, and the directory the tool creates inside other people's projects. They are one decision, because you asked that the directory name follow from the repo name.\n\nI am building everything that isn't blocked on this while you answer, so take your time. Nothing else is waiting.\n\nMy honest read is at the bottom of each option's detail. I recommend keeping the current name — but you said you don't love it, so the alternatives are real ones, not filler.",
+  "context_docs": [
+    "responses/ship-design/2026-08-14T18-57-25Z.md"
+  ],
+  "sections": [
+    {
+      "title": "The name",
+      "questions": [
+        {
+          "type": "info",
+          "prompt": "Constraints from your notes: unlikely to collide as a directory name, clearly identifies what it is, and reads well as something you type. A rename costs almost nothing right now — one commit, one unpublished repo — and costs progressively more after the first person installs it."
+        },
+        {
+          "id": "tool-name",
+          "type": "single",
+          "prompt": "What is this called?",
+          "why": "It sets the repository name, the installed directory, the skill name, and — unless you say otherwise in the next question — the command you type. Everything downstream in the docs and installer keys off it.",
+          "required": true,
+          "recommend": "question-surface",
+          "options": [
+            {
+              "value": "question-surface",
+              "label": "**question-surface** — keep it, CLI stays `qsurface`",
+              "detail": "Describes exactly what it is: a surface for questions. Already consistent across the code, docs, skill and changelog, so the rename cost is zero. `.question-surface/` is essentially collision-proof. Against it: *surface* does carry a faint Microsoft echo, and the name is a little abstract about what actually happens. My recommendation — the objection is cosmetic and the name is doing its job."
+            },
+            {
+              "value": "formwork",
+              "label": "**formwork** — CLI `formwork`",
+              "detail": "In construction, formwork is the temporary mould you build to shape a pour, then strip away once it sets — which is precisely what a questionnaire is here. Contains *form*, very low collision risk, and `.formwork/` is distinctive. Against it: it does not say *questions* to someone who hasn't heard the metaphor. The strongest alternative if you want a real name rather than a description."
+            },
+            {
+              "value": "intake",
+              "label": "**intake** — CLI `intake`",
+              "detail": "An intake form is a thing everyone already understands, and `intake serve` reads naturally. Against it: it is a common noun, so `.intake/` has a genuine chance of colliding in projects that are themselves about intake — medical, legal, support tooling — which is a real slice of who might install this."
+            },
+            {
+              "value": "askform",
+              "label": "**askform** — CLI `askform`",
+              "detail": "Maximally plain. Nobody has to be told what it does, and `.askform/` will not collide with anything. Against it: it is a label rather than a name, and it reads like a utility you'd forget you installed."
+            },
+            {
+              "value": "consult",
+              "label": "**consult** — CLI `consult`",
+              "detail": "Names the act rather than the artifact: the agent consults you. `consult serve <id>` is the best-reading command of the set. Against it: common enough that `consult` on PATH may already mean something on some machines, and `.consult/` is less obviously tool-owned."
+            }
+          ]
+        },
+        {
+          "id": "cli-name",
+          "type": "single",
+          "prompt": "If the project gets renamed, does the command follow it?",
+          "why": "You said you like saying `qsurface` even though you don't love the full name. Keeping the command while renaming the project is allowed, but it means the thing you type and the thing you clone have different names, which is a small permanent tax on documentation.",
+          "recommend": "follow",
+          "show_if": { "question": "tool-name", "not_equals": "question-surface" },
+          "options": [
+            {
+              "value": "follow",
+              "label": "Command matches the new name",
+              "detail": "One name for one thing. Docs, install instructions and error messages all agree."
+            },
+            {
+              "value": "keep-qsurface",
+              "label": "Keep `qsurface` as the command regardless",
+              "detail": "You keep the part you like saying. Cost: every install instruction has to explain that cloning X gives you a command called `qsurface`."
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "title": "The directory in other people's projects",
+      "questions": [
+        {
+          "id": "project-dir",
+          "type": "single",
+          "prompt": "What does the tool create inside a project that uses it?",
+          "why": "This appears in every repository anyone points the tool at, and it holds the tracked response records — so it is both a durable artifact and something a stranger reading that repo will encounter without context.",
+          "required": true,
+          "recommend": "dot-name",
+          "options": [
+            {
+              "value": "dot-name",
+              "label": "A hidden directory named for the tool — `.question-surface/`",
+              "detail": "Names itself, so a stranger can search the name and find out what wrote it. Hidden, so it stays out of the way in listings. Effectively collision-proof. Matches how tool-owned directories are conventionally named."
+            },
+            {
+              "value": "visible-name",
+              "label": "A visible directory named for the tool — `question-surface/`",
+              "detail": "More discoverable to a human browsing the repo, which matters if the point is that decisions are findable. Cost: claims a visible top-level slot in someone else's project."
+            },
+            {
+              "value": "questions",
+              "label": "`questions/`",
+              "detail": "Immediately legible without knowing the tool exists — a person finds `questions/` and understands it. Cost: generic enough to collide, and it says nothing about what wrote it."
+            },
+            {
+              "value": "docs-decisions",
+              "label": "`docs/decisions/`",
+              "detail": "Files responses as project documentation, next to whatever else lives in `docs/`. Cost: mixes generated records with hand-written docs, and assumes the project has a `docs/` convention."
+            }
+          ]
+        },
+        {
+          "id": "naming-notes",
+          "type": "longtext",
+          "prompt": "Any other name you'd rather use?",
+          "why": "The list above is mine. If something else has been sitting in the back of your head, it beats anything I generated.",
+          "placeholder": "Free text — or leave blank",
+          "allow_unknown": false
+        }
+      ]
+    }
+  ]
+}

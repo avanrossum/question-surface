@@ -1,0 +1,59 @@
+name: tests
+
+on:
+  push:
+    branches: [main]
+    tags: ["v*"]
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  unit:
+    # The tool is stdlib-only and expected to still run in a year, so the risk
+    # worth spending CI on is a Python release changing something underneath it.
+    name: python ${{ matrix.python }}
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        python: ["3.9", "3.10", "3.11", "3.12", "3.13"]
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: ${{ matrix.python }}
+      - name: Run the test suite
+        run: python -m unittest discover -s tests -t . -v
+      - name: Check the CLI starts and resolves paths
+        run: |
+          python qsurface.py --version
+          python qsurface.py validate example
+          python qsurface.py list
+
+  browser:
+    # Covers assets/app.js, which the Python suite cannot reach. Both bugs found
+    # in the first review lived there.
+    name: client-side checks
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Ensure a Chromium-family browser
+        run: |
+          if command -v google-chrome >/dev/null 2>&1; then
+            google-chrome --version
+          elif command -v chromium >/dev/null 2>&1; then
+            chromium --version
+          else
+            sudo apt-get update
+            sudo apt-get install -y chromium-browser || sudo apt-get install -y chromium
+          fi
+      - name: Run the client-side checks
+        # --require so a missing browser fails the job rather than quietly
+        # skipping — a check that silently stops running is worse than none.
+        run: python scripts/check_browser.py --require

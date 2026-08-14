@@ -4,6 +4,28 @@ Semver. Newest first. The tool carries its own version because questionnaires au
 
 ---
 
+## 1.1.0 — 2026-08-14
+
+Makes the tool installable and global: any agent that can run a shell command can now ask a batch of questions from any project. Shape decided by the `ship-design` and `naming` questionnaires, whose responses are tracked under `.question-surface/responses/`.
+
+### Added
+
+- **`install.sh`** — puts `qsurface` on PATH, symlinks the skill into `~/.claude/skills/`, and offers to add a gate pointer line to the global `CLAUDE.md`. Symlinks rather than copies, so `git pull` updates tool and skill together. `--uninstall` removes everything it added; `--yes` runs unattended.
+- **Project-local state.** Questionnaires and responses now live in `<project>/.question-surface/`, found from the nearest enclosing repository, so a decision lands in the repo it is about. The bundled `example` questionnaire stays readable from anywhere. `QSURFACE_PROJECT` overrides the project root.
+- **`--timeout MINUTES`** on `serve` (default 120, `0` waits forever). On timeout it writes no response and exits non-zero, leaving the draft intact — a partial record that reads like a decision is worse than none.
+- **Per-user config** — `qsurface config gate <n>` and `timeout_minutes`, stored under `$XDG_CONFIG_HOME/question-surface/`.
+- **`spec_version`** on questionnaires, defaulting to 1. A spec declaring a newer version than the tool understands is refused rather than half-read.
+- **`follows`** on questionnaires — names an earlier questionnaire and renders a read-only panel of what it settled, so a follow-up round does not make the respondent reconstruct it.
+- **`qsurface doctor`**, **`qsurface archive`**, **`qsurface show --open`**, and **`--version`**.
+- **Client-side checks** — `scripts/check_browser.py` drives headless Chrome over the parts of `app.js` the Python suite cannot reach, and skips cleanly when no browser is installed. 12 checks.
+- **CI** — the suite across Python 3.9–3.13, plus the client-side checks.
+- 60 Python tests, up from 37.
+
+### Changed
+
+- **Port collision no longer fails.** `serve` falls back to a free port and prints which one, so two agents can ask questions at once.
+- **The gate has two triggers.** Five or more questions as before, *and* any number whose answers would benefit from exposition, detailed answer choices, or open-ended interaction. Two hard forks belong on the surface; four easy questions do not.
+
 ## 1.0.0 — 2026-08-14
 
 Initial release as a standalone repository. The engine is unchanged from the version that was in use inside a governance repo; the questionnaires, responses, and governance wiring that were specific to that project are not carried over.

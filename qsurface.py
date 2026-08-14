@@ -1,34 +1,41 @@
 #!/usr/bin/env python3
 """Question Surface — collect answers to a large question set in one pass.
 
-    ./qsurface.py serve example           # open the form, wait for submit
-    ./qsurface.py validate example        # check a spec without serving
-    ./qsurface.py render example -o /tmp/preview.html
-    ./qsurface.py list                    # questionnaires + response counts
-    ./qsurface.py show example            # summarize the latest response
-    ./qsurface.py new my-questionnaire    # scaffold a new questionnaire
+    qsurface serve example           # open the form, wait for submit
+    qsurface validate example        # check a spec without serving
+    qsurface render example -o /tmp/preview.html
+    qsurface list                    # questionnaires + response counts
+    qsurface show example            # summarize the latest response
+    qsurface new my-questionnaire    # scaffold a new questionnaire
+    qsurface doctor                  # check the install is wired up
 
-A questionnaire is referenced by its id (resolved under `questionnaires/`) or by
-an explicit path to a JSON file.
+A questionnaire is referenced by its id or by an explicit path to a JSON file.
+Ids resolve against the current project's `.question-surface/questionnaires/`
+first, then the questionnaires bundled with the tool. Responses are always
+written into the project. See `qsurface/paths.py`.
 """
 
 from __future__ import annotations
 
 import argparse
 import json
+import os
+import shutil
 import sys
+import webbrowser
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parent
 sys.path.insert(0, str(ROOT))
 
+from qsurface import __version__  # noqa: E402
+from qsurface import browser  # noqa: E402
+from qsurface import config as config_mod  # noqa: E402
+from qsurface import paths  # noqa: E402
 from qsurface import render as render_mod  # noqa: E402
 from qsurface import server as server_mod  # noqa: E402
 from qsurface import spec as spec_mod  # noqa: E402
 from qsurface import store  # noqa: E402
-
-QUESTIONNAIRES = ROOT / "questionnaires"
-RESPONSES = ROOT / "responses"
 
 
 def resolve(reference: str) -> Path:
@@ -36,17 +43,46 @@ def resolve(reference: str) -> Path:
     candidate = Path(reference)
     if candidate.suffix == ".json" and candidate.exists():
         return candidate
-    for option in (
-        QUESTIONNAIRES / f"{reference}.json",
-        QUESTIONNAIRES / reference,
-        candidate.with_suffix(".json"),
-    ):
-        if option.exists():
-            return option
+    searched = paths.search_path()
+    for directory in searched:
+        for option in (directory / f"{reference}.json", directory / reference):
+            if option.exists():
+                return option
+    if candidate.with_suffix(".json").exists():
+        return candidate.with_suffix(".json")
+    looked = "\n".join(f"         {d}/" for d in searched)
     raise SystemExit(
         f"error: no questionnaire {reference!r}\n"
-        f"       looked in {QUESTIONNAIRES}/ — run `list` to see what exists"
+        f"       looked in:\n{looked}\n"
+        f"       run `qsurface list` to see what exists"
     )
+
+
+def latest_response(questionnaire_id: str) -> Path | None:
+    """The most recent submitted response, ignoring any in-progress draft."""
+    directory = store.response_dir(paths.responses_dir(), questionnaire_id)
+    if not directory.exists():
+        return None
+    files = [f for f in sorted(directory.glob("*.json")) if f.name != store.DRAFT_NAME]
+    return files[-1] if files else None
+
+
+def prior_answers(spec: dict) -> dict:
+    """Answers from the questionnaire this one follows, if there are any.
+
+    A follow-up round that cannot show what was already decided makes the
+    respondent re-derive it from memory, which is the failure this tool exists
+    to remove.
+    """
+    if not spec.get("follows"):
+        return {}
+    path = latest_response(spec["follows"])
+    if not path:
+        return {}
+    try:
+        return json.loads(path.read_text(encoding="utf-8"))
+    except (json.JSONDecodeError, OSError):
+        return {}
 
 
 def cmd_validate(args) -> int:
@@ -67,15 +103,22 @@ def cmd_validate(args) -> int:
 def cmd_serve(args) -> int:
     path = resolve(args.questionnaire)
     spec = spec_mod.load(path)
-    responses_root = Path(args.responses) if args.responses else RESPONSES
+    responses_root = Path(args.responses) if args.responses else paths.responses_dir()
     responses_root.mkdir(parents=True, exist_ok=True)
 
+    minutes = (
+        args.timeout
+        if args.timeout is not None
+        else config_mod.get("timeout_minutes")
+    )
     outcome = server_mod.serve(
         spec,
         responses_root,
         port=args.port,
         open_browser=not args.no_open,
         stay_open=args.stay_open,
+        timeout=(minutes * 60) if minutes else None,
+        prior=prior_answers(spec),
     )
     if not outcome:
         return 1
@@ -94,7 +137,10 @@ def cmd_render(args) -> int:
     path = resolve(args.questionnaire)
     spec = spec_mod.load(path)
     html = render_mod.render(
-        spec, standalone=True, respondent=store.detect_respondent()
+        spec,
+        standalone=True,
+        respondent=store.detect_respondent(),
+        prior=prior_answers(spec),
     )
     if args.out:
         out = Path(args.out)
@@ -106,37 +152,51 @@ def cmd_render(args) -> int:
 
 
 def cmd_list(args) -> int:
-    if not QUESTIONNAIRES.exists():
-        print("no questionnaires directory yet")
-        return 0
-    files = sorted(QUESTIONNAIRES.glob("*.json"))
-    if not files:
-        print("no questionnaires yet — scaffold one with `new <id>`")
-        return 0
+    responses_root = paths.responses_dir()
+    seen: set[str] = set()
+    found = False
 
-    for path in files:
-        try:
-            spec = spec_mod.load(path)
-        except spec_mod.SpecError as exc:
-            print(f"  {path.stem:<32} INVALID — {exc}")
+    for directory in paths.search_path():
+        files = sorted(directory.glob("*.json")) if directory.exists() else []
+        if not files:
             continue
-        count = len(spec_mod.answerable_questions(spec))
-        directory = store.response_dir(RESPONSES, spec["id"])
-        responses = sorted(directory.glob("*.json")) if directory.exists() else []
-        responses = [r for r in responses if r.name != store.DRAFT_NAME]
-        has_draft = (directory / store.DRAFT_NAME).exists()
-        state = f"{len(responses)} response(s)" if responses else "no responses"
-        if has_draft:
-            state += " · draft in progress"
-        print(f"  {spec['id']:<32} {count:>3}q  {state}")
-        print(f"  {'':<32}      {spec['title']}")
+        label = (
+            "project" if directory == paths.questionnaires_dir() else "bundled"
+        )
+        print(f"{label}  {directory}")
+        found = True
+        for path in files:
+            try:
+                spec = spec_mod.load(path)
+            except spec_mod.SpecError as exc:
+                print(f"  {path.stem:<30} INVALID — {exc}")
+                continue
+            if spec["id"] in seen:
+                # A project questionnaire shadows a bundled one of the same id.
+                print(f"  {spec['id']:<30}      (shadowed by the project copy)")
+                continue
+            seen.add(spec["id"])
+            count = len(spec_mod.answerable_questions(spec))
+            answers = store.response_dir(responses_root, spec["id"])
+            responses = sorted(answers.glob("*.json")) if answers.exists() else []
+            responses = [r for r in responses if r.name != store.DRAFT_NAME]
+            state = f"{len(responses)} response(s)" if responses else "no responses"
+            if (answers / store.DRAFT_NAME).exists():
+                state += " · draft in progress"
+            print(f"  {spec['id']:<30} {count:>3}q  {state}")
+            print(f"  {'':<30}      {spec['title']}")
+        print()
+
+    if not found:
+        print("no questionnaires yet — scaffold one with `qsurface new <id>`")
+        print(f"they will be written to {paths.questionnaires_dir()}")
     return 0
 
 
 def cmd_show(args) -> int:
     path = resolve(args.questionnaire)
     spec = spec_mod.load(path)
-    directory = store.response_dir(RESPONSES, spec["id"])
+    directory = store.response_dir(paths.responses_dir(), spec["id"])
     files = sorted(directory.glob("*.json")) if directory.exists() else []
     files = [f for f in files if f.name != store.DRAFT_NAME]
     if not files:
@@ -146,6 +206,13 @@ def cmd_show(args) -> int:
     latest = files[-1]
     if args.path_only:
         print(latest)
+        return 0
+
+    if args.open:
+        markdown = latest.with_suffix(".md")
+        target = markdown if markdown.exists() else latest
+        webbrowser.open(target.as_uri())
+        print(f"opened {target}")
         return 0
 
     data = json.loads(latest.read_text(encoding="utf-8"))
@@ -202,8 +269,9 @@ SCAFFOLD = {
 
 
 def cmd_new(args) -> int:
-    QUESTIONNAIRES.mkdir(parents=True, exist_ok=True)
-    path = QUESTIONNAIRES / f"{args.questionnaire}.json"
+    directory = paths.questionnaires_dir()
+    directory.mkdir(parents=True, exist_ok=True)
+    path = directory / f"{args.questionnaire}.json"
     if path.exists():
         raise SystemExit(f"error: {path} already exists")
     spec = dict(SCAFFOLD)
@@ -214,9 +282,145 @@ def cmd_new(args) -> int:
     return 0
 
 
+def cmd_config(args) -> int:
+    settings = config_mod.load()
+    if not args.key:
+        print(f"config  {config_mod.config_path()}")
+        for key, value in settings.items():
+            marker = "" if key in _stored_keys() else "  (default)"
+            print(f"  {key:<16} {value}{marker}")
+        print()
+        print(config_mod.gate_sentence())
+        return 0
+
+    if args.value is None:
+        print(settings.get(args.key, ""))
+        return 0
+
+    try:
+        value = int(args.value)
+    except ValueError:
+        raise SystemExit(f"error: {args.key} must be a whole number")
+    if value < 0:
+        raise SystemExit(f"error: {args.key} cannot be negative")
+
+    try:
+        path = config_mod.set_value(args.key, value)
+    except KeyError as exc:
+        raise SystemExit(f"error: {exc}")
+    print(f"{args.key} = {value}   ({path})")
+    if args.key == "gate":
+        print()
+        print("Update the pointer line in your global CLAUDE.md so agents see it:")
+        print(f"  {config_mod.gate_sentence(value)}")
+    return 0
+
+
+def _stored_keys() -> set[str]:
+    path = config_mod.config_path()
+    if not path.exists():
+        return set()
+    try:
+        return set(json.loads(path.read_text(encoding="utf-8")))
+    except (json.JSONDecodeError, OSError):
+        return set()
+
+
+def cmd_doctor(args) -> int:
+    """Report whether an install is actually wired up, and what is missing."""
+    problems = 0
+
+    def check(ok: bool, label: str, detail: str = "") -> None:
+        nonlocal problems
+        if not ok:
+            problems += 1
+        print(f"  {'ok  ' if ok else 'FAIL'}  {label}")
+        if detail:
+            print(f"          {detail}")
+
+    print(f"question-surface {__version__}")
+    print(f"  installed at {ROOT}")
+    print()
+
+    major, minor = sys.version_info[:2]
+    check(
+        (major, minor) >= (3, 9),
+        f"python {major}.{minor}",
+        "" if (major, minor) >= (3, 9) else "needs 3.9 or newer",
+    )
+
+    on_path = shutil.which("qsurface")
+    check(
+        bool(on_path),
+        "qsurface on PATH",
+        on_path or "run ./install.sh, or add this directory to PATH",
+    )
+
+    skill = Path.home() / ".claude" / "skills" / "question-surface"
+    linked = skill.exists()
+    target = ""
+    if skill.is_symlink():
+        target = f"-> {os.readlink(skill)}"
+    check(linked, "skill installed for Claude Code", target or (
+        "" if linked else f"expected {skill} — run ./install.sh"
+    ))
+
+    settings = config_mod.load()
+    check(True, f"gate = {settings['gate']}", str(config_mod.config_path()))
+    check(
+        True,
+        f"serve timeout = {settings['timeout_minutes'] or 'none'} min",
+    )
+
+    claude_md = Path.home() / ".claude" / "CLAUDE.md"
+    pointer = False
+    if claude_md.exists():
+        try:
+            pointer = "Question Surface:" in claude_md.read_text(encoding="utf-8")
+        except OSError:
+            pointer = False
+    check(
+        pointer,
+        "gate pointer in global CLAUDE.md",
+        "" if pointer else "agents will assume the default — run ./install.sh to add it",
+    )
+
+    chrome = browser.find_chrome()
+    check(
+        bool(chrome),
+        "headless browser for JS checks",
+        chrome or "optional — only needed to run scripts/check_browser.py",
+    )
+
+    print()
+    print("all good" if not problems else f"{problems} thing(s) need attention")
+    return 0 if not problems else 1
+
+
+def cmd_archive(args) -> int:
+    path = resolve(args.questionnaire)
+    if path.parent.resolve() == paths.BUNDLED_QUESTIONNAIRES.resolve():
+        raise SystemExit(
+            f"error: {path.stem} is bundled with the tool, not this project — "
+            "nothing to archive"
+        )
+    archive = paths.questionnaires_dir() / "archive"
+    archive.mkdir(parents=True, exist_ok=True)
+    destination = archive / path.name
+    if destination.exists():
+        raise SystemExit(f"error: {destination} already exists")
+    path.rename(destination)
+    print(f"archived {path.name} -> {destination}")
+    print("  responses are untouched; `show` still reads them")
+    return 0
+
+
 def main(argv: list[str] | None = None) -> int:
     parser = argparse.ArgumentParser(
         prog="qsurface", description="Batch question collection."
+    )
+    parser.add_argument(
+        "--version", action="version", version=f"question-surface {__version__}"
     )
     sub = parser.add_subparsers(dest="command", required=True)
 
@@ -228,6 +432,14 @@ def main(argv: list[str] | None = None) -> int:
         "--stay-open",
         action="store_true",
         help="keep serving after submit (multiple respondents)",
+    )
+    p.add_argument(
+        "--timeout",
+        type=int,
+        default=None,
+        metavar="MINUTES",
+        help="give up waiting after this long; 0 waits forever "
+        "(default: the `timeout_minutes` setting)",
     )
     p.add_argument("--responses", help="override the responses directory")
     p.set_defaults(func=cmd_serve)
@@ -247,12 +459,27 @@ def main(argv: list[str] | None = None) -> int:
     p = sub.add_parser("show", help="summarize the latest response")
     p.add_argument("questionnaire")
     p.add_argument("--path-only", action="store_true")
+    p.add_argument(
+        "--open", action="store_true", help="open the markdown render for reading"
+    )
     p.set_defaults(func=cmd_show)
 
     p = sub.add_parser("new", help="scaffold a new questionnaire")
     p.add_argument("questionnaire")
     p.add_argument("--title")
     p.set_defaults(func=cmd_new)
+
+    p = sub.add_parser("config", help="show or change a per-user setting")
+    p.add_argument("key", nargs="?", help=f"one of: {', '.join(config_mod.VALID_KEYS)}")
+    p.add_argument("value", nargs="?", help="omit to read the current value")
+    p.set_defaults(func=cmd_config)
+
+    p = sub.add_parser("doctor", help="check that this install is wired up")
+    p.set_defaults(func=cmd_doctor)
+
+    p = sub.add_parser("archive", help="retire a questionnaire, keeping its responses")
+    p.add_argument("questionnaire")
+    p.set_defaults(func=cmd_archive)
 
     args = parser.parse_args(argv)
     try:

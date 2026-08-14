@@ -24,6 +24,14 @@ ALL_TYPES = ANSWER_TYPES | {"info"}
 # Conditional operators supported by `show_if`.
 CONDITION_OPS = {"equals", "not_equals", "includes", "answered", "any_of"}
 
+# The format version this tool understands. A questionnaire without one is
+# assumed to be version 1, so every spec authored before the field existed
+# keeps loading. A questionnaire declaring a *newer* version is refused rather
+# than half-understood — the whole point of the field is that a spec authored
+# today still works against a later tool, and that guarantee only holds if the
+# mismatch is detected instead of guessed at.
+SPEC_VERSION = 1
+
 
 class SpecError(ValueError):
     """Raised when a questionnaire spec is malformed."""
@@ -53,9 +61,22 @@ def validate(spec: dict, source: str = "<spec>") -> dict:
     if not isinstance(spec["sections"], list) or not spec["sections"]:
         raise SpecError(f"{source}: 'sections' must be a non-empty list")
 
+    version = spec.setdefault("spec_version", SPEC_VERSION)
+    if not isinstance(version, int) or isinstance(version, bool) or version < 1:
+        raise SpecError(f"{source}: 'spec_version' must be a positive integer")
+    if version > SPEC_VERSION:
+        raise SpecError(
+            f"{source}: spec_version {version} is newer than this tool reads "
+            f"(understands up to {SPEC_VERSION}) — upgrade question-surface"
+        )
+
     spec.setdefault("intro", "")
     spec.setdefault("context_docs", [])
     spec.setdefault("respondent", "")
+
+    follows = spec.setdefault("follows", "")
+    if follows and not isinstance(follows, str):
+        raise SpecError(f"{source}: 'follows' must be a questionnaire id")
 
     seen_ids: set[str] = set()
     # Ordered list of answerable ids as they appear, so a `show_if` can only

@@ -1,0 +1,246 @@
+{
+  "questionnaire_id": "ship-design",
+  "title": "Question Surface — how it ships",
+  "respondent": "Alexander van Rossum",
+  "submitted_at": "2026-08-14T18:57:25Z",
+  "counts": {
+    "total": 20,
+    "answered": 17,
+    "unknown": 2,
+    "unanswered": 1,
+    "skipped": 0
+  },
+  "flagged_unknown": [
+    "repo-name",
+    "project-dir-name"
+  ],
+  "unanswered": [
+    "anything-else"
+  ],
+  "skipped": [],
+  "answers": {
+    "install-path": {
+      "prompt": "What is the primary install route?",
+      "type": "single",
+      "value": "script",
+      "unknown": false,
+      "labels": [
+        "`git clone` + `./install.sh`"
+      ],
+      "recommended": "script",
+      "followed_recommendation": true
+    },
+    "skill-link": {
+      "prompt": "Should the installer symlink the skill into `~/.claude/skills/`, or copy it?",
+      "type": "single",
+      "value": "symlink",
+      "unknown": false,
+      "labels": [
+        "Symlink"
+      ],
+      "recommended": "symlink",
+      "followed_recommendation": true
+    },
+    "repo-visibility": {
+      "prompt": "Public or private repository?",
+      "type": "single",
+      "value": "public",
+      "unknown": false,
+      "labels": [
+        "Public"
+      ],
+      "recommended": "public",
+      "followed_recommendation": true
+    },
+    "repo-name": {
+      "prompt": "Repository name",
+      "type": "text",
+      "value": null,
+      "unknown": true,
+      "notes": "Open to suggestions.  That was just literally what i said when i built it \"OMG i can't handle this any more i need a question surface\" - i know it's not a great name."
+    },
+    "who-publishes": {
+      "prompt": "Who creates and pushes the GitHub repo?",
+      "type": "single",
+      "value": "claude-creates",
+      "unknown": false,
+      "notes": "Org is avanrossum.  Please make sure that any email addresses are alex@mipyip.com and not testamentinc.com - they are the same gh account, but i just don't use the old testament inc / creative identiy anymore.",
+      "labels": [
+        "I create it with `gh` and push, then hand you the URL"
+      ],
+      "recommended": "claude-creates",
+      "followed_recommendation": true
+    },
+    "state-location": {
+      "prompt": "Where do questionnaires and responses go?",
+      "type": "single",
+      "value": "project",
+      "unknown": false,
+      "labels": [
+        "In the project being worked on"
+      ],
+      "recommended": "project",
+      "followed_recommendation": true
+    },
+    "project-dir-name": {
+      "prompt": "What is that directory called inside a project?",
+      "type": "single",
+      "value": null,
+      "unknown": true,
+      "notes": "somthign unlikely to create a conflict / collision, but also very clearly identifies what it is, and preferably infomred by the name of the repo",
+      "recommended": "dot-question-surface",
+      "followed_recommendation": false
+    },
+    "track-responses": {
+      "prompt": "Should responses be committed to the host project's git by default?",
+      "type": "single",
+      "value": "tracked",
+      "unknown": false,
+      "labels": [
+        "Tracked — the installer writes no ignore rule"
+      ],
+      "recommended": "tracked",
+      "followed_recommendation": true
+    },
+    "auto-stage": {
+      "prompt": "Should `qsurface` stage the response file itself after a submit?",
+      "type": "single",
+      "value": "no",
+      "unknown": false,
+      "notes": "... i like \"qsurface\" 'cause it sounds neat.  I don't think it's a good name, but it's fun to say.  Surface sounds like a MS product (it is lol) and i think qsurface kinda sounds like it too",
+      "labels": [
+        "No — the tool never touches git"
+      ],
+      "recommended": "no",
+      "followed_recommendation": true
+    },
+    "lifecycle-shape": {
+      "prompt": "Keep `serve` blocking, or add a non-blocking start/stop pair?",
+      "type": "single",
+      "value": "blocking",
+      "unknown": false,
+      "labels": [
+        "Blocking only"
+      ],
+      "recommended": "blocking",
+      "followed_recommendation": true
+    },
+    "timeout": {
+      "prompt": "Should waiting time out?",
+      "type": "single",
+      "value": "configurable",
+      "unknown": false,
+      "labels": [
+        "`--timeout`, with a default"
+      ],
+      "recommended": "configurable",
+      "followed_recommendation": true
+    },
+    "timeout-behavior": {
+      "prompt": "What happens when it times out?",
+      "type": "single",
+      "value": "draft-nonzero",
+      "unknown": false,
+      "labels": [
+        "Save the draft, exit non-zero, write nothing"
+      ],
+      "recommended": "draft-nonzero",
+      "followed_recommendation": true
+    },
+    "question-gate": {
+      "prompt": "What is the default gate, for someone who never configures one?",
+      "type": "single",
+      "value": "five",
+      "unknown": false,
+      "notes": ".... so this surface REALLY improves my ability to think about how to answer stuff.  so.\n\ni think the gate should be widened:\n\n1) five or more, by default\n2) if the questions (any amount) that need answers would _benefit from aditional exposition or detailed answer choices and opened ended interaction_",
+      "labels": [
+        "Five or more"
+      ],
+      "recommended": "five",
+      "followed_recommendation": true
+    },
+    "gate-config": {
+      "prompt": "How does a user change that number for themselves?",
+      "type": "single",
+      "value": "config-plus-pointer",
+      "unknown": false,
+      "labels": [
+        "A config file, plus a one-line pointer the installer adds to your global `CLAUDE.md`"
+      ],
+      "recommended": "config-plus-pointer",
+      "followed_recommendation": true
+    },
+    "mcp": {
+      "prompt": "Expose the tool over MCP as well as the CLI?",
+      "type": "single",
+      "value": "later",
+      "unknown": false,
+      "notes": "Add to roadmap for sure.",
+      "labels": [
+        "Not now — revisit once the CLI is in use"
+      ],
+      "recommended": "later",
+      "followed_recommendation": true
+    },
+    "spec-version": {
+      "prompt": "Add a `spec_version` field to the questionnaire format?",
+      "type": "single",
+      "value": "yes",
+      "unknown": false,
+      "labels": [
+        "Yes — validated, defaulting to 1 when absent"
+      ],
+      "recommended": "yes",
+      "followed_recommendation": true
+    },
+    "ci": {
+      "prompt": "Add GitHub Actions running the test suite?",
+      "type": "single",
+      "value": "matrix",
+      "unknown": false,
+      "notes": "... you know... i wasn't being serious about that - it's a running joke that terrible vibecoders ask that sort of thing.\n\nThat said, were were going to do CI anyway, and i appreciate that the reason is \"i asked for no bugs\".  Legitimately funny.",
+      "labels": [
+        "Yes — on push and PR, across supported Python versions"
+      ],
+      "recommended": "matrix",
+      "followed_recommendation": true
+    },
+    "browser-checks": {
+      "prompt": "Should the client-side JavaScript get automated checks?",
+      "type": "single",
+      "value": "headless-script",
+      "unknown": false,
+      "notes": "headless chrome seems like it might allow for gaps or forgotten suites.  That said, you get the same with Jest.  Let's start with headless chrome and if that proves insufficient, we can make a JEst exception and build around that.\n\nThough - headless chrome will require deps too.  Perhaps both or Jest only.",
+      "labels": [
+        "A committed script that drives headless Chrome"
+      ],
+      "recommended": "headless-script",
+      "followed_recommendation": true
+    },
+    "extras": {
+      "prompt": "Anything here worth building into v1?",
+      "type": "multi",
+      "value": [
+        "version-flag",
+        "doctor",
+        "open-last",
+        "followup",
+        "archive"
+      ],
+      "unknown": false,
+      "labels": [
+        "`qsurface --version`",
+        "`qsurface doctor`",
+        "`qsurface show --open`",
+        "Follow-up questionnaires that carry the prior response as context",
+        "`qsurface archive <id>`"
+      ]
+    },
+    "anything-else": {
+      "prompt": "Anything I have not asked that would change the design?",
+      "type": "longtext",
+      "value": null,
+      "unknown": false
+    }
+  }
+}

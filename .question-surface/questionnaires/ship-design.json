@@ -1,0 +1,490 @@
+{
+  "id": "ship-design",
+  "title": "Question Surface — how it ships",
+  "intro": "Decisions that gate turning this from a folder inside one repo into a tool any agent can install and call. Everything here is open; nothing is being re-asked.\n\nAlready settled and not on this form: it stays stdlib-only, loopback-only, and browser-launched with no interface of its own; it gets semver, tags, and a changelog; `serve` stays a blocking call that self-terminates on submit.\n\nAnything you don't know yet, tick **Don't know** — that flags it as research rather than a blank, and it becomes a work item instead of a question I ask you again.",
+  "context_docs": [
+    "README.md",
+    "CLAUDE.md",
+    ".claude/skills/question-surface/SKILL.md"
+  ],
+  "sections": [
+    {
+      "title": "Shape of the install",
+      "intro": "How a fresh machine — or a fresh Claude instance in an unrelated project — gets this.",
+      "questions": [
+        {
+          "type": "info",
+          "prompt": "Today the tool only works from inside its own directory: `QUESTIONNAIRES` and `RESPONSES` resolve relative to `qsurface.py`, and the skill is found only because it sits in that repo's `.claude/skills/`. Both have to change for a global install, and they change independently — that is the first two sections."
+        },
+        {
+          "id": "install-path",
+          "type": "single",
+          "prompt": "What is the primary install route?",
+          "why": "This decides what I build and what the README's first code block says. It also decides who can use the tool: a Claude Code plugin reaches Claude Code and nothing else, while a CLI on `PATH` reaches anything that can run a shell command — which is your stated goal of *any* LLM being able to call it.",
+          "required": true,
+          "recommend": "script",
+          "options": [
+            {
+              "value": "script",
+              "label": "`git clone` + `./install.sh`",
+              "detail": "The installer symlinks the skill into `~/.claude/skills/` and puts `qsurface` on `PATH`. Same pattern you already run for the access ledger, so it is one house style rather than two. Works for any agent runtime, not just Claude Code."
+            },
+            {
+              "value": "plugin",
+              "label": "Claude Code plugin from a marketplace repo",
+              "detail": "`/plugin install` and the skill arrives with it. Lowest friction inside Claude Code. Cost: it is Claude-Code-only, so an LLM outside Claude Code gets nothing, and the Python CLI still needs a home."
+            },
+            {
+              "value": "both",
+              "label": "Both — `install.sh` as the real installer, plus a thin plugin manifest",
+              "detail": "Covers Claude Code users and everyone else. Cost: two install paths to keep working and to test on every release."
+            },
+            {
+              "value": "uv",
+              "label": "`uv tool install git+https://…`",
+              "detail": "Familiar to Python users and handles `PATH` for you. Cost: adds `uv` as an install-time dependency, and it does not place the skill — that stays a manual step, which is the part most likely to be skipped."
+            }
+          ]
+        },
+        {
+          "id": "skill-link",
+          "type": "single",
+          "prompt": "Should the installer symlink the skill into `~/.claude/skills/`, or copy it?",
+          "why": "A symlink means `git pull` in the clone updates the skill everywhere immediately, including breaking changes you did not ask for right then. A copy means the skill is stable until you re-run the installer, and can silently go stale against a newer CLI.",
+          "recommend": "symlink",
+          "show_if": { "question": "install-path", "any_of": ["script", "both", "uv"] },
+          "options": [
+            {
+              "value": "symlink",
+              "label": "Symlink",
+              "detail": "One source of truth. The skill and the CLI can never disagree about which version they are."
+            },
+            {
+              "value": "copy",
+              "label": "Copy, refreshed by re-running the installer",
+              "detail": "Predictable — nothing changes under you mid-session. Cost: a stale skill describing flags the installed CLI doesn't have."
+            }
+          ]
+        },
+        {
+          "id": "repo-visibility",
+          "type": "single",
+          "prompt": "Public or private repository?",
+          "why": "Public allows a one-line install from a raw URL and makes the README the documentation. Private means every install needs an authenticated clone, which is a real friction cost on a new machine.",
+          "required": true,
+          "recommend": "public",
+          "options": [
+            {
+              "value": "public",
+              "label": "Public",
+              "detail": "Nothing in the tool is proprietary — the extraction already removed everything that was. Simplest install story."
+            },
+            {
+              "value": "private",
+              "label": "Private",
+              "detail": "Install requires auth. Fine if you would rather not maintain something people file issues against."
+            }
+          ]
+        },
+        {
+          "id": "repo-name",
+          "type": "text",
+          "prompt": "Repository name",
+          "why": "Also becomes the clone directory and, if it goes on `PATH` under its own name, part of what you type. The CLI itself is `qsurface` either way.",
+          "placeholder": "question-surface"
+        },
+        {
+          "id": "who-publishes",
+          "type": "single",
+          "prompt": "Who creates and pushes the GitHub repo?",
+          "why": "Creating a repo under your account and pushing to it is an outward-facing action I will not take on assumption. Tell me which half is mine.",
+          "required": true,
+          "recommend": "claude-creates",
+          "options": [
+            {
+              "value": "claude-creates",
+              "label": "I create it with `gh` and push, then hand you the URL",
+              "detail": "Fastest. I will confirm the exact name and visibility with you before the create call runs."
+            },
+            {
+              "value": "you-create",
+              "label": "You create the empty repo; I add the remote and push",
+              "detail": "You keep control of naming, org, and settings; I do the mechanical part."
+            },
+            {
+              "value": "local-only",
+              "label": "Stay local for now",
+              "detail": "Keeps tagging and changelog discipline without publishing yet. Install story becomes 'clone from a path'."
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "title": "Where questionnaires and responses live",
+      "intro": "Once the tool is global, its data cannot live next to the code that runs it.",
+      "questions": [
+        {
+          "type": "info",
+          "prompt": "This is the decision with the longest tail. Responses are records of decisions, and where they land determines whether they are findable a year from now by the person reading the project — or only by someone who knows the tool exists."
+        },
+        {
+          "id": "state-location",
+          "type": "single",
+          "prompt": "Where do questionnaires and responses go?",
+          "why": "Everything downstream depends on this: whether responses can be code-reviewed alongside the change they justify, whether two projects can collide, and whether a response survives someone uninstalling the tool.",
+          "required": true,
+          "recommend": "project",
+          "options": [
+            {
+              "value": "project",
+              "label": "In the project being worked on",
+              "detail": "A decision lands in the repo it is about and can be committed in the same PR as the work it gates. Cost: adds a directory to every project that uses it."
+            },
+            {
+              "value": "tool",
+              "label": "In the tool's install directory (today's behaviour)",
+              "detail": "Nothing is added to your projects. Cost: every project's answers pile up in one unrelated folder, detached from the work, and are lost if the clone is deleted."
+            },
+            {
+              "value": "central",
+              "label": "A central state directory keyed by project",
+              "detail": "Projects stay clean and nothing collides. Cost: the decision record is no longer in the repo, so it is invisible to code review and to anyone who clones the project."
+            },
+            {
+              "value": "configurable",
+              "label": "Configurable, defaulting to the project",
+              "detail": "An env var or config file overrides it. Cost: a config surface to document and support, and two behaviours to test."
+            }
+          ]
+        },
+        {
+          "id": "project-dir-name",
+          "type": "single",
+          "prompt": "What is that directory called inside a project?",
+          "why": "It shows up in every repo that uses the tool. A dotted name stays out of the way; a plain name is more discoverable to a human who was not told it exists.",
+          "recommend": "dot-question-surface",
+          "show_if": { "question": "state-location", "any_of": ["project", "configurable"] },
+          "options": [
+            {
+              "value": "dot-question-surface",
+              "label": "`.question-surface/`",
+              "detail": "Hidden, unambiguous, sorts out of the way. Matches the convention of tool-owned directories."
+            },
+            {
+              "value": "questions",
+              "label": "`questions/`",
+              "detail": "Visible and obvious to a human browsing the repo. Cost: a fairly generic name to claim at the top level."
+            },
+            {
+              "value": "docs-decisions",
+              "label": "`docs/decisions/`",
+              "detail": "Files responses as project documentation rather than tool output. Cost: mixes generated records with hand-written docs."
+            }
+          ]
+        },
+        {
+          "id": "track-responses",
+          "type": "single",
+          "prompt": "Should responses be committed to the host project's git by default?",
+          "why": "This is the durability argument the whole tool rests on. If responses are ignored by default, the answers end up exactly where the chat transcript was — somewhere nobody re-reads.",
+          "required": true,
+          "recommend": "tracked",
+          "options": [
+            {
+              "value": "tracked",
+              "label": "Tracked — the installer writes no ignore rule",
+              "detail": "Responses are reviewable and survive. Cost: answers you gave casually are in the repo history."
+            },
+            {
+              "value": "ignored",
+              "label": "Ignored by default",
+              "detail": "Nothing lands in the project history unless someone opts in. Cost: the durability claim goes away."
+            },
+            {
+              "value": "user-decides",
+              "label": "Neither — the skill tells the agent to ask",
+              "detail": "No default imposed. Cost: it will be inconsistent across projects."
+            }
+          ]
+        },
+        {
+          "id": "auto-stage",
+          "type": "single",
+          "prompt": "Should `qsurface` stage the response file itself after a submit?",
+          "why": "Convenient, but it means a tool you ran to ask a question has touched your git index — which is surprising if you were mid-commit on something unrelated.",
+          "recommend": "no",
+          "show_if": { "question": "track-responses", "equals": "tracked" },
+          "options": [
+            {
+              "value": "no",
+              "label": "No — the tool never touches git",
+              "detail": "The agent commits it as part of the task, which is where the decision belongs anyway."
+            },
+            {
+              "value": "yes",
+              "label": "Yes — `git add` the response on submit",
+              "detail": "One less step to forget. Cost: mutates the index of a repo the tool does not own."
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "title": "The loop an agent drives",
+      "intro": "You described: build surface → serve → present link → wait → parse → terminate. That already works. These are the edges around it.",
+      "questions": [
+        {
+          "type": "info",
+          "prompt": "Confirmed from the code: `serve` blocks until submit, then stops the accept loop and returns, and the process exits — so the server does terminate on its own. It now also releases the socket rather than holding the port. **What it does not have is a way to stop waiting.** If nobody ever submits, it waits forever."
+        },
+        {
+          "id": "lifecycle-shape",
+          "type": "single",
+          "prompt": "Keep `serve` blocking, or add a non-blocking start/stop pair?",
+          "why": "Blocking matches the loop you described and needs no state files. A start/stop pair lets an agent keep working while you answer, at the cost of a pid file, a status command, and orphaned-server cleanup.",
+          "required": true,
+          "recommend": "blocking",
+          "options": [
+            {
+              "value": "blocking",
+              "label": "Blocking only",
+              "detail": "The agent backgrounds the call and gets woken when it exits. No new state to manage, no orphan servers. This is what runs today."
+            },
+            {
+              "value": "trio",
+              "label": "Add `start` / `status` / `stop`",
+              "detail": "The agent can poll and do other work meanwhile. Cost: pid/state files, stale-state handling, and a way to kill a server whose agent went away."
+            },
+            {
+              "value": "both",
+              "label": "Both",
+              "detail": "Blocking stays the documented path; the trio is there when needed. Cost: two lifecycles to test and document."
+            }
+          ]
+        },
+        {
+          "id": "timeout",
+          "type": "single",
+          "prompt": "Should waiting time out?",
+          "why": "Without a timeout, a questionnaire you walk away from leaves a Python process and a bound port alive indefinitely, and the agent's background job never returns. With one, an unanswered form has a defined end.",
+          "required": true,
+          "recommend": "configurable",
+          "options": [
+            {
+              "value": "configurable",
+              "label": "`--timeout`, with a default",
+              "detail": "Sensible default, overridable for a long questionnaire you want to leave open. I would set the default around two hours."
+            },
+            {
+              "value": "fixed",
+              "label": "A fixed timeout, not configurable",
+              "detail": "One less flag. Cost: the wrong number is the wrong number everywhere."
+            },
+            {
+              "value": "none",
+              "label": "No timeout — wait forever",
+              "detail": "Simplest. Cost: the failure mode above, which an agent cannot detect or recover from."
+            }
+          ]
+        },
+        {
+          "id": "timeout-behavior",
+          "type": "single",
+          "prompt": "What happens when it times out?",
+          "why": "This decides what the calling agent believes. A non-zero exit reads as 'no answers yet, still blocked'; a written response reads as 'this is what we got', which is wrong if you were simply away from the desk.",
+          "recommend": "draft-nonzero",
+          "show_if": { "question": "timeout", "not_equals": "none" },
+          "options": [
+            {
+              "value": "draft-nonzero",
+              "label": "Save the draft, exit non-zero, write nothing",
+              "detail": "The agent reports it is still waiting and can re-serve later — the draft means nothing typed is lost."
+            },
+            {
+              "value": "partial-response",
+              "label": "Write a response marked incomplete",
+              "detail": "The agent gets whatever was filled in and can proceed on partial information. Cost: a partial record that looks like a decision."
+            }
+          ]
+        },
+        {
+          "id": "question-gate",
+          "type": "single",
+          "prompt": "What is the default gate, for someone who never configures one?",
+          "why": "The gate is the thing that actually changes agent behaviour — the tool existing does not. Five was chosen for a repo where architecture forks were the common case; a general-purpose tool ships to people who will never touch the setting, so the default is what most installs will run.",
+          "required": true,
+          "recommend": "five",
+          "options": [
+            {
+              "value": "five",
+              "label": "Five or more",
+              "detail": "Proven in use. Four or fewer stays in chat, which keeps quick exchanges quick."
+            },
+            {
+              "value": "three",
+              "label": "Three or more",
+              "detail": "Catches more batches. Cost: spinning up a browser form for three questions is heavier than the questions deserve."
+            },
+            {
+              "value": "none",
+              "label": "No hard floor — the skill describes when it helps",
+              "detail": "More judgement, less mechanism. Cost: a soft rule is one the model talks itself out of, which is how the failure mode returns."
+            }
+          ]
+        },
+        {
+          "id": "gate-config",
+          "type": "single",
+          "prompt": "How does a user change that number for themselves?",
+          "why": "A skill is static markdown, so the number cannot simply be a setting the skill reads at runtime — the model has to either be told it up front or spend a tool call finding out. That tradeoff is the whole question: a value that is always in context costs a file the tool does not own, and a value that is looked up costs a call the model may skip.",
+          "recommend": "config-plus-pointer",
+          "options": [
+            {
+              "value": "config-plus-pointer",
+              "label": "A config file, plus a one-line pointer the installer adds to your global `CLAUDE.md`",
+              "detail": "`qsurface config set gate 3` is the source of truth; the pointer line puts the current number in context for every session with no tool call. Cost: the installer edits `~/.claude/CLAUDE.md`, which it does not own — it would ask first and be reversible."
+            },
+            {
+              "value": "config-only",
+              "label": "A config file the skill tells the agent to read",
+              "detail": "Nothing outside the tool's own directories is touched. Cost: the agent must run `qsurface gate` to learn the threshold, and the moment it is unsure it will guess the default instead."
+            },
+            {
+              "value": "templated-skill",
+              "label": "The installer writes the number into the installed skill text",
+              "detail": "Always in context, zero tool calls, nothing else touched. Cost: only works if the skill is a copy rather than a symlink, so it conflicts with the symlink option earlier — and the number goes stale if you edit the config directly."
+            },
+            {
+              "value": "env-var",
+              "label": "An environment variable",
+              "detail": "No files, trivially overridable per project. Cost: it lives in a shell profile the agent cannot see, so in practice the model never knows it changed."
+            },
+            {
+              "value": "not-settable",
+              "label": "Not settable — one number for everyone",
+              "detail": "Least machinery, and the rule stays legible. Cost: the number is wrong for anyone whose work is shaped differently than yours."
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "title": "Reach and durability",
+      "questions": [
+        {
+          "id": "mcp",
+          "type": "single",
+          "prompt": "Expose the tool over MCP as well as the CLI?",
+          "why": "An MCP server would let MCP-capable clients call it as a typed tool rather than shelling out. It is the difference between 'any agent with a shell' and 'any agent at all', and it is a meaningful amount of additional surface to maintain.",
+          "recommend": "later",
+          "options": [
+            {
+              "value": "later",
+              "label": "Not now — revisit once the CLI is in use",
+              "detail": "The CLI already covers every runtime that can run a command, which is most of them. Keeps v1 small."
+            },
+            {
+              "value": "now",
+              "label": "Build it as part of this work",
+              "detail": "Covers clients that cannot shell out. Cost: a second interface to version, and MCP servers are a stdlib-only constraint's least favourite thing."
+            },
+            {
+              "value": "never",
+              "label": "No — CLI only, permanently",
+              "detail": "One interface forever."
+            }
+          ]
+        },
+        {
+          "id": "spec-version",
+          "type": "single",
+          "prompt": "Add a `spec_version` field to the questionnaire format?",
+          "why": "You said questionnaires authored against one format have to keep working against later ones. Without a version field in the document, the loader cannot tell an old spec from a malformed one, so the only safe migration is never changing the format.",
+          "recommend": "yes",
+          "options": [
+            {
+              "value": "yes",
+              "label": "Yes — validated, defaulting to 1 when absent",
+              "detail": "Existing questionnaires keep loading, and a future breaking change has somewhere to branch. Cheap now, impossible to retrofit cleanly later."
+            },
+            {
+              "value": "no",
+              "label": "No — keep the format as-is",
+              "detail": "One less field to explain. Cost: the format is effectively frozen, or old questionnaires break silently."
+            }
+          ]
+        },
+        {
+          "id": "ci",
+          "type": "single",
+          "prompt": "Add GitHub Actions running the test suite?",
+          "why": "You asked for no bugs. The suite is 37 tests and runs in under a second; the thing it cannot catch is a change that breaks on a Python version you don't have locally.",
+          "recommend": "matrix",
+          "show_if": { "question": "repo-visibility", "answered": true },
+          "options": [
+            {
+              "value": "matrix",
+              "label": "Yes — on push and PR, across supported Python versions",
+              "detail": "Catches the version-drift class of break, which is the realistic one for a stdlib-only tool that must still run in a year."
+            },
+            {
+              "value": "single",
+              "label": "Yes — one Python version only",
+              "detail": "Cheaper and faster. Cost: blind to the exact failure CI is most useful for here."
+            },
+            {
+              "value": "none",
+              "label": "No CI",
+              "detail": "Tests run when someone remembers to run them."
+            }
+          ]
+        },
+        {
+          "id": "browser-checks",
+          "type": "single",
+          "prompt": "Should the client-side JavaScript get automated checks?",
+          "why": "Both bugs you just had me fix were in `app.js`, and neither was reachable from the Python suite — I verified the fixes by driving headless Chrome. That check could be a committed script instead of something I did once by hand.",
+          "recommend": "headless-script",
+          "options": [
+            {
+              "value": "headless-script",
+              "label": "A committed script that drives headless Chrome",
+              "detail": "No npm, no new runtime dependency — it uses a browser that is already on the machine, and skips cleanly when one isn't. Covers exactly the class of bug that got through."
+            },
+            {
+              "value": "npm-harness",
+              "label": "A real JS test runner",
+              "detail": "Better tooling and assertions. Cost: breaks the no-npm, no-build-step constraint, which is the reason the tool is expected to still run in a year."
+            },
+            {
+              "value": "manual",
+              "label": "Nothing automated — check by hand when the JS changes",
+              "detail": "Zero added machinery. Cost: this is the status quo that shipped both bugs."
+            }
+          ]
+        },
+        {
+          "id": "extras",
+          "type": "multi",
+          "prompt": "Anything here worth building into v1?",
+          "why": "These are cheap individually and easy to skip. Picking none is a fine answer — I would rather ship the core clean than pad it.",
+          "options": [
+            { "value": "version-flag", "label": "`qsurface --version`", "detail": "Tells you which install you are actually running when two exist." },
+            { "value": "doctor", "label": "`qsurface doctor`", "detail": "Verifies the skill is linked, the CLI is on PATH, and the Python version is supported. Useful on a fresh machine." },
+            { "value": "open-last", "label": "`qsurface show --open`", "detail": "Opens the last response's markdown render in a browser for reading." },
+            { "value": "followup", "label": "Follow-up questionnaires that carry the prior response as context", "detail": "For the 'repeat as needed' half of the loop — a second round that shows what was already decided." },
+            { "value": "archive", "label": "`qsurface archive <id>`", "detail": "Moves a finished questionnaire out of the active list without deleting its responses." }
+          ]
+        },
+        {
+          "id": "anything-else",
+          "type": "longtext",
+          "prompt": "Anything I have not asked that would change the design?",
+          "why": "The questions above are the forks I can see from the code. You have the intent behind the tool, which I only have secondhand.",
+          "placeholder": "Free text — or leave blank"
+        }
+      ]
+    }
+  ]
+}
