@@ -64,7 +64,7 @@
       "type": "single",
       "value": "claude-creates",
       "unknown": false,
-      "notes": "Org is avanrossum.  Please make sure that any email addresses are alex@mipyip.com and not testamentinc.com - they are the same gh account, but i just don't use the old testament inc / creative identiy anymore.",
+      "notes": "[redacted — git identity to use for this repo]",
       "labels": [
         "I create it with `gh` and push, then hand you the URL"
       ],
