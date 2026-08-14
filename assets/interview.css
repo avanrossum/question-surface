@@ -149,35 +149,87 @@
 .iv-state.is-active { display: block; }
 
 /* Processing: the respondent spends every gap here, so it has to read as
-   "thinking", not as "hung". Replaceable as a self-contained block. */
-.iv-processing { text-align: center; padding: 46px 24px; }
-.iv-pulse {
-  display: inline-flex;
-  gap: 7px;
-  margin-bottom: 18px;
-}
-.iv-pulse span {
-  width: 9px;
-  height: 9px;
-  border-radius: 50%;
-  background: var(--accent);
-  opacity: .3;
-  animation: iv-bounce 1.25s ease-in-out infinite;
-}
-.iv-pulse span:nth-child(2) { animation-delay: .16s; }
-.iv-pulse span:nth-child(3) { animation-delay: .32s; }
+   "thinking", not as "hung".
 
-@keyframes iv-bounce {
-  0%, 70%, 100% { opacity: .25; transform: translateY(0); }
-  35%           { opacity: 1;   transform: translateY(-6px); }
+   Design: "margin mark" — a caret working down a margin rule, lighting each
+   line as it passes, the way someone reads a page they intend to respond to.
+   Imported from Claude Design (project "Agent is thinking state",
+   iv-processing.html). The demo scaffold's token and card definitions were
+   dropped; this file already has them. Everything below is that deliverable,
+   with the card made a flex column since .iv-card here is not one. */
+
+.iv-card.iv-processing {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 42px;
+  padding: 60px 48px;
+  min-height: 380px;
 }
 
-.iv-processing-label { font-size: 15px; color: var(--text-2); }
-.iv-processing-sub { font-size: 13px; color: var(--text-3); margin-top: 6px; }
+/* the mark and the lines it visits */
+.iv-mark { position: relative; width: 470px; max-width: 100%; box-sizing: border-box; padding-left: 28px; }
+.iv-mark-rule { position: absolute; left: 12px; top: -4px; bottom: -4px; width: 1px; background: var(--border); }
+.iv-mark-caret {
+  position: absolute; left: 0; top: -3px; width: 3px; height: 13px;
+  border-radius: 2px; background: var(--accent);
+  transform: translateY(24px);                       /* resting frame */
+  animation: ivCaret 10s cubic-bezier(.55, 0, .25, 1) infinite;
+}
+.iv-mark-lines { display: grid; gap: 17px; }
+.iv-mark-lines span {
+  display: block; height: 7px; border-radius: 2px;
+  background-color: var(--border); width: var(--w, 100%);
+  animation: ivMarkLine 10s ease-in-out infinite;
+}
+.iv-mark-lines span:nth-child(1) { animation-delay: 0s; }
+.iv-mark-lines span:nth-child(2) { animation-delay: 2s; }
+.iv-mark-lines span:nth-child(3) { animation-delay: 4s; }
+.iv-mark-lines span:nth-child(4) { animation-delay: 6s; }
+.iv-mark-lines span:nth-child(5) { animation-delay: 8s; }
 
+/* five stops of 2s; the last stop eases back to the top to re-read */
+@keyframes ivCaret {
+  0%, 11%  { transform: translateY(0); opacity: 1; }
+  19%, 31% { transform: translateY(24px); }
+  39%, 51% { transform: translateY(48px); }
+  59%, 71% { transform: translateY(72px); }
+  79%, 93% { transform: translateY(96px); opacity: 1; }
+  96%      { opacity: .15; }
+  100%     { transform: translateY(0); opacity: 1; }
+}
+@keyframes ivMarkLine {
+  0%, 2%    { background-color: var(--border); }
+  10%       { background-color: var(--border-strong); }
+  24%, 100% { background-color: var(--border); }
+}
+
+/* copy */
+.iv-copy { display: grid; justify-items: center; gap: 11px; text-align: center; }
+.iv-primary {
+  margin: 0; font-size: 16px; line-height: 1.4; font-weight: 450;
+  letter-spacing: -.004em; color: var(--text);
+}
+.iv-secstack { display: grid; }
+.iv-secstack > p {
+  grid-area: 1/1; margin: 0; font-family: var(--mono);
+  font-size: 12px; line-height: 1.4; letter-spacing: .02em; color: var(--text-3);
+}
+/* one-shot crossfade at 22s so a long gap still shows change — no JS. The
+   state is display:none between questions, so this restarts on every turn. */
+.iv-sec-a { animation: ivSecOut .9s ease 22s both; }
+.iv-sec-b { opacity: 0; animation: ivSecIn .9s ease 22s both; }
+@keyframes ivSecOut { from { opacity: 1; } to { opacity: 0; } }
+@keyframes ivSecIn  { from { opacity: 0; } to { opacity: 1; } }
+
+/* still frame: mark parked on line 2, one slow breath */
 @media (prefers-reduced-motion: reduce) {
-  .iv-pulse span { animation: none; opacity: .6; }
+  .iv-processing * { animation: none !important; }
+  .iv-mark-caret { animation: ivBreathe 5s ease-in-out infinite !important; }
+  .iv-sec-b { display: none; }
 }
+@keyframes ivBreathe { 0%, 100% { opacity: 1; } 50% { opacity: .45; } }
 
 .iv-done { text-align: center; padding: 40px 24px; }
 .iv-done h2 { font-size: 20px; margin: 0 0 10px; }

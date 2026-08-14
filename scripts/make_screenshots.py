@@ -206,8 +206,77 @@ def main() -> int:
         "1440,980",
         theme="light",
     )
+    interview_shots(chrome)
     print("done")
     return 0
+
+
+# Interview mode. The record is built through the real constructor so the page
+# is the one respondents see, not a mock of it.
+IV_HISTORY = [
+    {
+        "seq": 1,
+        "prompt": "What actually broke first?",
+        "answer": "Every deploy signs everyone out. Support notices before we do.",
+        "skipped": False,
+    },
+    {
+        "seq": 2,
+        "prompt": "Who feels that first — and what do they do about it?",
+        "answer": "Support. They tell people to sign in again, so we never see a "
+        "ticket for the real cause.",
+        "skipped": False,
+    },
+]
+
+IV_QUESTION = """
+document.getElementById("stateProcessing").classList.remove("is-active");
+document.getElementById("stateAsking").classList.add("is-active");
+document.getElementById("ivSeq").textContent = "Question 3";
+document.getElementById("ivPrompt").textContent =
+  "You said support absorbs it. What would you have to see to call this urgent?";
+var why = document.getElementById("ivWhy");
+why.textContent = "I want your threshold, not mine — it decides whether this " +
+  "ships before or after the migration.";
+why.hidden = false;
+document.getElementById("ivAnswer").value =
+  "Honestly, a customer telling us. Which has probably already happened and we " +
+  "filed it as a login bug.";
+var d = document.getElementById("ivDictate");
+d.querySelector("span").textContent =
+  "Prefer to talk? Press the microphone key, or Fn twice, to dictate.";
+d.hidden = false;
+"""
+
+IV_PROCESSING = """
+document.getElementById("stateProcessing").classList.add("is-active");
+"""
+
+
+def interview_shots(chrome: str) -> None:
+    from qsurface import interview  # noqa: PLC0415
+
+    record = interview.new_record(
+        "demo", "Interviewing you about the storage rewrite", "systems design", 0
+    )
+    record["respondent"] = "Alex"
+    record["exchanges"] = IV_HISTORY
+    page = render.interview_page(record)
+
+    shot(
+        chrome,
+        page.replace("</body>", f"<script>{IV_QUESTION}</script></body>"),
+        "interview.png",
+        "1100,900",
+        theme="light",
+    )
+    shot(
+        chrome,
+        page.replace("</body>", f"<script>{IV_PROCESSING}</script></body>"),
+        "interview-processing.png",
+        "1100,820",
+        theme="light",
+    )
 
 
 if __name__ == "__main__":

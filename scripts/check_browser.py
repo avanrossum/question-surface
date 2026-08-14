@@ -271,6 +271,78 @@ def run_interview_case(
     return results
 
 
+# The processing animation cannot be sampled by waiting: CSS animations do not
+# advance under --virtual-time-budget. Seeking the animation directly tests the
+# keyframes themselves, which is the thing that would break in an edit anyway.
+MOTION_HARNESS = """
+(function () {
+  var out = [];
+  function log(k, v) { out.push(k + "=" + v); }
+  try {
+    document.getElementById("stateProcessing").classList.add("is-active");
+    var caret = document.querySelector(".iv-mark-caret");
+    var anims = caret.getAnimations();
+    log("caret_animation", anims.map(function (a) { return a.animationName; }).join("|"));
+    var ys = [];
+    [0, 1900, 3900, 5900, 7900].forEach(function (ms) {
+      anims[0].currentTime = ms;
+      var m = getComputedStyle(caret).transform;
+      ys.push(m === "none" ? 0 : Math.round(parseFloat(m.split(",")[5]) || 0));
+    });
+    log("caret_stops", ys.filter(function (v, i, a) { return a.indexOf(v) === i; }).length);
+    log("caret_travel", Math.max.apply(null, ys) - Math.min.apply(null, ys));
+
+    var line = document.querySelectorAll(".iv-mark-lines span")[0];
+    var lineAnim = line.getAnimations()[0];
+    var colors = [];
+    [0, 1000, 5000].forEach(function (ms) {
+      lineAnim.currentTime = ms;
+      var c = getComputedStyle(line).backgroundColor;
+      if (colors.indexOf(c) === -1) colors.push(c);
+    });
+    log("line_highlights", colors.length);
+    log("reduced_motion_respected",
+      typeof window.matchMedia("(prefers-reduced-motion: reduce)").matches === "boolean");
+  } catch (err) {
+    log("motion_error", String(err && err.message || err));
+  }
+  var pre = document.createElement("pre");
+  pre.textContent = "\\n@@" + out.join("\\n@@") + "\\n";
+  document.body.appendChild(pre);
+})();
+"""
+
+
+def check_processing_motion(chrome: str, tmp: Path) -> list:
+    from qsurface import interview  # noqa: PLC0415
+
+    record = interview.new_record("motion", "Motion check", "", 0)
+    html = render.interview_page(record)
+    html = html.replace("</body>", "<script>" + MOTION_HARNESS + "</script></body>")
+    page = tmp / "motion.html"
+    page.write_text(html, encoding="utf-8")
+    dom = browser.dump_dom(page, chrome=chrome, budget_ms=3000)
+
+    results: dict[str, str] = {}
+    for line in dom.splitlines():
+        idx = line.find("@@")
+        while idx != -1:
+            rest = line[idx + 2 :]
+            end = rest.find("<")
+            field = rest if end == -1 else rest[:end]
+            if "=" in field:
+                key, _, value = field.partition("=")
+                results[key.strip()] = value.strip()
+            idx = line.find("@@", idx + 2)
+
+    return [
+        (results.get("caret_animation"), "ivCaret", "the reading mark is animated"),
+        (results.get("caret_stops"), "5", "the mark stops at each of the five lines"),
+        (results.get("caret_travel"), "96", "the mark travels the full column"),
+        (results.get("line_highlights"), "2", "a line lights as the mark reaches it"),
+    ]
+
+
 def check_interview(chrome: str) -> int:
     """Drive the interview page through asking, done, and lost."""
     failures = 0
@@ -315,6 +387,7 @@ def check_interview(chrome: str) -> int:
             (lost.get("state_lost"), "true", "a dead agent surfaces as lost contact"),
             (lost.get("state_processing"), "false", "the processing state does not persist"),
         ]
+        expectations += check_processing_motion(chrome, tmp)
 
     for actual, expected, description in expectations:
         if actual == expected:
@@ -382,7 +455,7 @@ def main() -> int:
 
     interview_failures = check_interview(chrome)
     failures += interview_failures
-    ran += 7
+    ran += 11
 
     print()
     if failures:

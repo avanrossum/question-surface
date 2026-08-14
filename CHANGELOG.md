@@ -4,6 +4,20 @@ Semver. Newest first. The tool carries its own version because questionnaires au
 
 ---
 
+## 1.3.1 — 2026-08-14
+
+### Changed
+
+- **The interview processing state is now a designed treatment.** A caret works down a margin rule, lighting each line as it passes — the shape of someone reading a page they intend to respond to, rather than a spinner. After 22 seconds the secondary line changes to acknowledge a long wait, so a slow turn still shows movement. Built in Claude Design against this project's own tokens and imported wholesale; no libraries, no build step, and `prefers-reduced-motion` parks the mark with a slow breath instead.
+
+### Added
+
+- Four client-side checks covering the animation, and both interview screenshots are now produced by `scripts/make_screenshots.py` rather than by hand, so they cannot drift. 28 client-side checks.
+
+### Notes
+
+- CSS animations do not advance under Chrome's `--virtual-time-budget`, so the motion checks seek the animation directly through `getAnimations()` rather than sampling over time. Sampling appears to work and silently proves nothing.
+
 ## 1.3.0 — 2026-08-14
 
 ### Added

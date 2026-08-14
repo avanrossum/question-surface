@@ -216,9 +216,24 @@ def interview_page(record: dict) -> str:
 
   <div class="iv-state" id="stateProcessing">
     <div class="iv-card iv-processing">
-      <div class="iv-pulse"><span></span><span></span><span></span></div>
-      <div class="iv-processing-label">Reading your answer…</div>
-      <div class="iv-processing-sub">Working out what to ask next.</div>
+      <div class="iv-mark" aria-hidden="true">
+        <div class="iv-mark-rule"></div>
+        <div class="iv-mark-caret"></div>
+        <div class="iv-mark-lines">
+          <span style="--w:100%"></span>
+          <span style="--w:94%"></span>
+          <span style="--w:100%"></span>
+          <span style="--w:97%"></span>
+          <span style="--w:71%"></span>
+        </div>
+      </div>
+      <div class="iv-copy" role="status" aria-live="polite">
+        <p class="iv-primary">Reading your answer&hellip;</p>
+        <div class="iv-secstack">
+          <p class="iv-secondary iv-sec-a">Working out what to ask next.</p>
+          <p class="iv-secondary iv-sec-b">Still reading. Longer answers take a moment.</p>
+        </div>
+      </div>
     </div>
   </div>
 

@@ -138,6 +138,10 @@ qsurface interview ask outage --prompt "What broke first?" --why "symptom before
 qsurface interview close outage
 ```
 
+While the agent reads what you said, the page shows it reading rather than spinning:
+
+![The processing state](docs/images/interview-processing.png)
+
 `open` returns immediately and leaves a detached server. Each `ask` blocks until you answer, then prints the answer to the agent, which writes the next question. The transcript is written after **every** answer, so an interview that gets interrupted still leaves everything said so far.
 
 The skill instructs the agent to conduct it as an expert interviewer in a stated or inferred domain: follow the interesting thread, ask for the concrete when handed an abstraction, notice contradictions, and stop when it has what it needs rather than when a count runs out.
@@ -205,7 +209,7 @@ These are load-bearing and not up for negotiation in a PR:
 
 ```bash
 python3 -m unittest discover -s tests -t .   # 79 tests, about a second
-python3 scripts/check_browser.py             # 24 client-side checks in a real browser
+python3 scripts/check_browser.py             # 28 client-side checks in a real browser
 ```
 
 The browser checks cover `assets/app.js`, which the Python suite cannot reach — both bugs found in the first review lived there. They drive headless Chrome if one is installed and skip cleanly if not, rather than pulling in a JavaScript toolchain and breaking the no-build-step constraint. CI runs the suite on Python 3.9 through 3.13 and the browser checks with `--require`.
