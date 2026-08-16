@@ -1,0 +1,87 @@
+{
+  "interview_id": "build-retro",
+  "title": "Building Question Surface in a day — retro",
+  "kind": "interview",
+  "domain": "engineering retrospective",
+  "respondent": "Alexander van Rossum",
+  "started_at": "2026-08-16T04:46:56Z",
+  "ended_at": "2026-08-16T05:07:37Z",
+  "counts": {
+    "asked": 4,
+    "answered": 4,
+    "skipped": 0
+  },
+  "exchanges": [
+    {
+      "prompt": "This morning you asked me to extract a folder. What did you expect to have at the end of that — and where did that expectation first break?",
+      "why": "A retro that starts with 'how did it go' gets a summary. I want the specific moment the thing stopped matching the plan, because that is where anything worth learning lives.",
+      "context": "Today's shape, in case it helps recall — this all happened in one session.\n\n| Tag | What landed |\n|---|---|\n| v1.0.0 | Extracted from the governance repo, de-domained, two client-side bugs fixed |\n| v1.1.0 | `install.sh`, project-local state, `--timeout`, per-user config, CI |\n| v1.2.0 | Close-on-submit, MIT licence |\n| v1.3.0 | Interview mode — one question at a time, agent in the loop |\n| v1.3.1 | The designed processing animation |\n| v1.3.2 | README rewritten from an interview with you |\n| v1.4.0 | `distill`, selectable chips, context blocks like this one |\n\nIt started this morning as \"extract that folder and don't bring the Salesforce with it.\"\n\n- Six real defects were caught by the browser checks along the way.\n- Two of those checks were later found to be passing while proving nothing.\n",
+      "placeholder": "",
+      "options": [],
+      "seq": 1,
+      "asked_at": "2026-08-16T04:47:08Z",
+      "answer": "Hah - i literally only expected you to pull the \"question surface\", remove a couple of unnecessary things, and make it something that I could install as a tool globally because it proved to be quite useful in it's original space, and I found good uses for it elsewhere.\n\nOne spall thing that i felt was reuseable across multiple spaces",
+      "selected": [],
+      "skipped": false,
+      "answered_at": "2026-08-16T04:48:54Z"
+    },
+    {
+      "prompt": "So it was meant to be one small reusable thing, and the original scope was done by v1.1.0. When did you first notice it had stopped being that — and did that land as a good moment or an uh-oh moment?",
+      "why": "You skipped the second half of the last question, which is the half I actually want. Scope that grows can be a project running away or a thing finding its real shape, and which one it felt like at the time is the whole difference.",
+      "context": "Things that were **not** in \"extract it and let me install it globally\":\n\n- Interview mode — a second interaction model entirely\n- `distill`, which only exists because interviews turned out to need a form afterwards\n- A designed processing animation, briefed out to Claude Design and imported\n- A README rewritten by interviewing you rather than by me guessing\n- Four reference docs, a roadmap, and a changelog with seven tags\n\nThe original scope — extract, de-domain, make installable — was finished by early afternoon at `v1.1.0`.\n",
+      "placeholder": "",
+      "options": [
+        "When interview mode landed",
+        "When the checks started catching real bugs",
+        "When it got a README and docs of its own",
+        "It never stopped feeling small"
+      ],
+      "seq": 2,
+      "asked_at": "2026-08-16T04:49:20Z",
+      "answer": "Hrm - good catch - did i mention that I was feeling a bit tired?\n\nSo - yea - it's never really felt small.  I was more than happy enough with it as it was in the initial extract and first test.  But when i was testing the surface, I realized that it also would have been really usedful as a replacement for my normal interview process - because sometimes it's just easuer to work in an environment where you can freeform answers, and reconsider what you're talking about.\n\nBut there's also just something about the way communicating inside turns in the dedicated cli  or desktop apps just don't capture.\n\nThe other big issue was that the typical form itself wasn't suited to the interview process either.  Interviews aren't just a list of questions on a page - they are turn by turn - and the \"survey\" form factor has many differnt question _types_ that don't fit an interview either.\n\nAnother big part of why this is better than the cli / desktop interview process is the way that I don't get to see what you are \"thinking\" until after the next question is completely prepared.  Reading the output while it's happening gets you thinking about _how_ you want to answer the question, but having to wait until the question, and it supporting context, are ready means you take the whole turn in at once.  And somehow that's a different thing entirely",
+      "selected": [],
+      "skipped": false,
+      "answered_at": "2026-08-16T04:56:39Z"
+    },
+    {
+      "prompt": "Take that last point further. Is the value in *not watching it form*, or in *getting it whole*? Or is that a distinction that only exists on paper?",
+      "why": "This is the most interesting thing you have said tonight and it is currently an accident of how the tool is built, not a decision. Pinning it down decides whether showing an agent's reasoning live is a feature we never build, or one we build carefully.",
+      "context": "The two readings pull apart, and they imply different products.\n\n| If the value is… | Then… |\n|---|---|\n| **Not watching it form** | Streaming anything is harmful. The waiting state is doing real work by hiding the process, and it should never become a \"thinking out loud\" feed. |\n| **Getting it whole** | Streaming is fine as long as nothing partial is shown. Complete units could arrive early — context first, question after — as long as each is finished. |\n\nRight now the tool takes the first reading by accident rather than by decision: nothing streams because `ask` blocks until the whole question is composed. That is worth making deliberate either way, since it decides whether \"show the agent's reasoning live\" is ever a feature or permanently a mistake.\n",
+      "placeholder": "",
+      "options": [
+        "Not watching it form is the point",
+        "Getting it whole is the point",
+        "Both, and they can't be separated",
+        "The distinction is academic"
+      ],
+      "seq": 3,
+      "asked_at": "2026-08-16T04:57:13Z",
+      "answer": "> Streaming anything is harmful. The waiting state is doing real work by hiding the process, and it should never become a \"thinking out loud\" feed.\n\n\"Harmful\" is perhaps too strong of a word...  Sitting in \"silence\" while waiting for the reply is just as important as getting the reply \"wholesale\" - having a moment to wait means a moment to consider what you said, and see if there's somehting you meant to add, and where you think you'd like to take it next.\n\nHonestly - i can think of two potential features simply because of that wait after the last turn in _this_ interview - team retros, where each member is asked to complete a retro by their team lead, and the answers are all synthesized - perhpas that could be fired off with the same set of 2-3 questions for each team member, and then it forks from there\n\nand  - adding \"voice mode\" with an open source text-to-speeech tool and sorting out the whisper alternative (ot solution) - having the interview present in a spoken env might take it even firther.\n\nSo - guess those are two for the roadmap.\n\n> Right now the tool takes the first reading by accident rather than by decision: nothing streams because ask blocks until the whole question is composed. That is worth making deliberate either way, since it decides whether \"show the agent's reasoning live\" is ever a feature or permanently a mistake.\n\nAccident or not, it's what i had envisioned when i asked for the feature, so if it was an accident, it was the correct form of the accident. I don't have any intention of adding it in!",
+      "selected": [
+        "Both, and they can't be separated"
+      ],
+      "skipped": false,
+      "answered_at": "2026-08-16T05:03:34Z"
+    },
+    {
+      "prompt": "Last one. Where did I waste your time today?",
+      "why": "Everything so far has been about what worked, which makes for a lopsided retro and a useless one. Friction is easier to recall than success anyway, and it is the half that changes how I work tomorrow.",
+      "context": "Candidates, so you can react rather than recall:\n\n- I shipped bugs and then found them myself — the six duplicate summaries, the clamp that did nothing, two checks that passed while proving nothing.\n- I restarted the README interview mid-flow to pick up a copy fix, which cost you the tab you already had open.\n- A lot of reasoning went into chat rather than into the thing you were reading. You noticed this and it became the context block.\n- Several rounds of \"here is a decision, which do you want\" where I could have just picked.\n\nAny of those, or something else entirely. \"Nothing that stands out\" is a real answer too.\n",
+      "placeholder": "",
+      "options": [
+        "Nothing that stands out",
+        "Bugs you shipped then caught",
+        "Too much reasoning in chat",
+        "Asked me things you could have decided"
+      ],
+      "seq": 4,
+      "asked_at": "2026-08-16T05:04:03Z",
+      "answer": "Honestly - there was no wasted time - only development.  Bugs, mistakess, rabbit trails - that's part of greenfield development - especially greenfield dev that started with \"please go get this half-finished thing and make it whole\"\n\nThis whol thing would have taken me weeks to do right, moving it in and out of prioritiy status as i work on other things.  Instead we got it done in a day.  Dev that fast is \"supposed\" to ahve bugs - Agentic or not.\n\nThis is why we have reviews and The Adversary",
+      "selected": [
+        "Nothing that stands out"
+      ],
+      "skipped": false,
+      "answered_at": "2026-08-16T05:07:22Z"
+    }
+  ]
+}
