@@ -68,6 +68,31 @@ Deliberately not the Web Speech API, which in Chrome sends audio to a recognitio
 
 ---
 
+## Handing off to a form, in the same tab
+
+When an interview ends with things that have become precise enough to decide, the form for them opens where the interview already is. Nobody goes hunting for a second URL, and nobody gets a questionnaire they did not agree to.
+
+```bash
+qsurface interview hold <id>                                  # questions over, hold the page
+# ...distill, author the follow-up, validate it...
+qsurface interview offer <id> --questionnaire <qid> \
+    --message "Three things worth pinning down."              # blocks for the outcome
+```
+
+`hold` switches the page to "That's the last question — hold on a moment" while the agent reads the conversation back. Without it the page still says "reading your answer", which stops being true once there are no more questions.
+
+`offer` presents the questionnaire by name and count with two buttons. Taking it loads the form into the same tab; declining shows the usual close-this-tab message. Either way `offer` blocks until the respondent decides, then prints the outcome:
+
+| Outcome | Meaning |
+|---|---|
+| `taken` | The form was answered. Prints the counts and both response paths. |
+| `declined` | No follow-up. The transcript stands. |
+| exit 1 | Nobody answered the offer before the timeout. |
+
+The transcript records what happened in a `followup` block — offered, taken, and where the answers went — so the interview and the response beside it are not two unrelated files.
+
+If there is nothing worth asking, skip both and `close` as usual.
+
 ## Turning an interview into a questionnaire
 
 ```bash

@@ -559,6 +559,70 @@ def cmd_interview_ask(args) -> int:
     return 0
 
 
+def cmd_interview_hold(args) -> int:
+    """Tell the page the questions are over while the agent decides what next."""
+    session = interview.read_session(args.interview)
+    if not interview.health(session):
+        print("error: that interview is not running", file=sys.stderr)
+        return 1
+    interview.control(session, "/control/hold", {}, timeout=20)
+    print("  Holding. The page says the questions are over and you are reading back.")
+    print(f"    then: qsurface interview offer {args.interview} --questionnaire <id>")
+    print(f"      or: qsurface interview close {args.interview}")
+    return 0
+
+
+def cmd_interview_offer(args) -> int:
+    """Offer a follow-up questionnaire in the tab the interview is already in.
+
+    Blocks until the respondent takes it and submits, or declines. An interview
+    that ends with real forks should not make anyone go and find a second URL,
+    and a form nobody agreed to is an imposition — so it is an offer, in place.
+    """
+    session = interview.read_session(args.interview)
+    if not interview.health(session):
+        print("error: that interview is not running", file=sys.stderr)
+        return 1
+
+    spec = spec_mod.load(resolve(args.questionnaire))
+    minutes = args.timeout if args.timeout is not None else config_mod.get(
+        "timeout_minutes"
+    )
+    seconds = (minutes * 60) if minutes else None
+
+    try:
+        reply = interview.control(
+            session,
+            "/control/offer",
+            {"spec": spec, "message": args.message or "", "timeout": seconds},
+            timeout=(seconds + 30) if seconds else None,
+        )
+    except (urllib.error.URLError, OSError) as exc:
+        print(f"error: lost contact with the interview server — {exc}", file=sys.stderr)
+        return 1
+
+    result = reply.get("result") or {}
+    outcome = result.get("outcome")
+
+    if outcome == "taken":
+        counts = result.get("counts", {})
+        print("  Follow-up answered.")
+        print(f"    answered  {counts.get('answered')}/{counts.get('total')}")
+        print(f"    unknown   {counts.get('unknown')}")
+        print(f"    json      {result.get('json')}")
+        print(f"    markdown  {result.get('markdown')}")
+        if result.get("flagged_unknown"):
+            print(f"    research  {', '.join(result['flagged_unknown'])}")
+        return 0
+
+    if outcome == "declined":
+        print("  Declined. The transcript stands; nothing else was asked.")
+        return 0
+
+    print(f"no answer to the offer ({outcome})", file=sys.stderr)
+    return 1
+
+
 def cmd_interview_close(args) -> int:
     session = interview.read_session(args.interview)
     if not interview.health(session):
@@ -821,6 +885,21 @@ def main(argv: list[str] | None = None) -> int:
     s.add_argument("--timeout", type=int, default=None, metavar="MINUTES")
     s.add_argument("--text", action="store_true", help="print the answer text only")
     s.set_defaults(func=cmd_interview_ask)
+
+    s = iv.add_parser(
+        "hold", help="say the questions are over while you decide what follows"
+    )
+    s.add_argument("interview")
+    s.set_defaults(func=cmd_interview_hold)
+
+    s = iv.add_parser(
+        "offer", help="offer a follow-up questionnaire in the same tab, and wait"
+    )
+    s.add_argument("interview")
+    s.add_argument("--questionnaire", required=True, help="questionnaire id or path")
+    s.add_argument("--message", help="what to say when offering it")
+    s.add_argument("--timeout", type=int, default=None, metavar="MINUTES")
+    s.set_defaults(func=cmd_interview_offer)
 
     s = iv.add_parser("close", help="finish the interview and write the transcript")
     s.add_argument("interview")

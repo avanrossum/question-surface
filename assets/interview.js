@@ -11,12 +11,14 @@
   var after = CFG.answered || 0;
   var current = null;
   var selected = [];
+  var phase = "";
   var failures = 0;
   var stopped = false;
 
   var states = {
     asking: document.getElementById("stateAsking"),
     processing: document.getElementById("stateProcessing"),
+    offer: document.getElementById("stateOffer"),
     done: document.getElementById("stateDone"),
     lost: document.getElementById("stateLost")
   };
@@ -54,6 +56,11 @@
       primary: "Reading your answer…",
       secondary: "Working out what to ask next.",
       longWait: "Still reading. Longer answers take a moment."
+    },
+    wrapping: {
+      primary: "That's the last question — hold on a moment.",
+      secondary: "Reading the whole conversation back.",
+      longWait: "Still going. Working out whether anything needs pinning down."
     }
   };
 
@@ -258,6 +265,55 @@
     });
   }
 
+  /* ---------- the follow-up offer ----------
+     An interview often ends with things that have become precise enough to
+     decide rather than discuss. The form for those opens in this tab, on
+     acceptance — a survey nobody agreed to is an imposition, and a second URL
+     handed over in the terminal is a worse one. */
+
+  function showOffer(offer) {
+    var body = document.getElementById("ivOfferBody");
+    var title = document.getElementById("ivOfferTitle");
+    if (title) title.textContent = offer.title || "A follow-up";
+    if (body) {
+      body.textContent = offer.message ||
+        "Some of that is now precise enough to decide. I have " +
+        offer.questions + " question" + (offer.questions === 1 ? "" : "s") +
+        " ready if you want them.";
+    }
+    var count = document.getElementById("ivOfferCount");
+    if (count) {
+      count.textContent = offer.questions + " question" +
+        (offer.questions === 1 ? "" : "s");
+    }
+    setState("offer");
+  }
+
+  function answerOffer(accepted) {
+    var take = document.getElementById("ivOfferTake");
+    var skip = document.getElementById("ivOfferSkip");
+    if (take) take.disabled = true;
+    if (skip) skip.disabled = true;
+    stopped = true;                // the poll must not race the navigation
+
+    fetch(accepted ? "/accept" : "/decline", { method: "POST" })
+      .then(function (r) { return r.json(); })
+      .then(function (data) {
+        if (!data.ok) throw new Error("offer already answered");
+        if (accepted) {
+          window.location.href = "/survey";
+          return;
+        }
+        finish("");
+      })
+      .catch(function () {
+        stopped = false;
+        if (take) take.disabled = false;
+        if (skip) skip.disabled = false;
+        poll();
+      });
+  }
+
   /* ---------- polling ---------- */
 
   // The server normally holds a poll open for ~20s, so re-polling on return is
@@ -281,7 +337,8 @@
     if (stopped || polling) return;
     polling = true;
     var startedAt = Date.now();
-    fetch("/poll?after=" + encodeURIComponent(after))
+    fetch("/poll?after=" + encodeURIComponent(after) +
+          "&phase=" + encodeURIComponent(phase))
       .then(function (r) { return r.json(); })
       .then(function (data) {
         polling = false;
@@ -290,8 +347,24 @@
           finish(data.summary);
           return;
         }
+        if (data.survey) {
+          // Accepted on another tab, or a reload after accepting.
+          window.location.href = "/survey";
+          return;
+        }
+        if (data.offer) {
+          phase = "offering";
+          showOffer(data.offer);
+          repoll(startedAt);
+          return;
+        }
         if (data.question) {
+          phase = "asking";
           showQuestion(data.question);
+        } else if (data.holding) {
+          phase = "holding";
+          setProcessingCopy("wrapping");
+          setState("processing");
         }
         repoll(startedAt);         // waiting, or watching for the next question
       })
@@ -360,6 +433,11 @@
   answerEl.addEventListener("keydown", function (ev) {
     if ((ev.metaKey || ev.ctrlKey) && ev.key === "Enter") send(false);
   });
+
+  var offerTake = document.getElementById("ivOfferTake");
+  var offerSkip = document.getElementById("ivOfferSkip");
+  if (offerTake) offerTake.addEventListener("click", function () { answerOffer(true); });
+  if (offerSkip) offerSkip.addEventListener("click", function () { answerOffer(false); });
 
   (CFG.exchanges || []).forEach(appendHistory);
   dictationHint();

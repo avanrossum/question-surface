@@ -183,10 +183,20 @@ CONDITIONAL = {
 STUB_TEMPLATE = """
 <script>
 window.__STUB__ = %s;
+window.__CALLS__ = [];
 window.fetch = function (url, opts) {
   var route = String(url);
   var plan = window.__STUB__;
+  window.__CALLS__.push(route);
   if (plan.failEverything) return Promise.reject(new Error("offline"));
+  if (route.indexOf("/accept") !== -1) {
+    // Never resolves: the real handler navigates to /survey on success, which
+    // would take the page away before anything could be reported.
+    return new Promise(function () {});
+  }
+  if (route.indexOf("/decline") !== -1) {
+    return Promise.resolve({ json: function () { return Promise.resolve({ ok: true }); } });
+  }
   var body;
   if (route.indexOf("/answer") !== -1) {
     body = { ok: true };
@@ -230,6 +240,12 @@ setTimeout(function () {
   log("context_has_table",
     !!document.getElementById("ivContextBody").querySelector("table"));
   log("picks_in_history", document.querySelectorAll(".iv-picked").length);
+  log("offer_shown", active("stateOffer"));
+  log("offer_title", (document.getElementById("ivOfferTitle").textContent || "").slice(0, 12));
+  log("offer_count", (document.getElementById("ivOfferCount").textContent || ""));
+  log("calls", (window.__CALLS__ || []).filter(function (c) {
+    return c.indexOf("/accept") !== -1 || c.indexOf("/decline") !== -1;
+  }).join(","));
   var pre = document.createElement("pre");
   pre.textContent = "\\n@@" + out.join("\\n@@") + "\\n";
   document.body.appendChild(pre);
@@ -265,6 +281,22 @@ AUTO_ANSWER = """
 """
 
 
+CLICK_OFFER = """
+<script>
+(function (which) {
+  var tries = 0;
+  var timer = setInterval(function () {
+    var el = document.getElementById(which);
+    var shown = document.getElementById("stateOffer");
+    if (el && shown && shown.classList.contains("is-active")) {
+      el.click(); clearInterval(timer);
+    }
+    if (++tries > 200) clearInterval(timer);
+  }, 40);
+})("%s");
+</script>
+"""
+
 CLICK_CHIP = """
 <script>
 (function () {
@@ -286,11 +318,13 @@ def run_interview_case(
     tmp: Path,
     auto_answer: bool = False,
     click_chip: bool = False,
+    click_offer: str = "",
 ) -> dict:
     html = interview_page_html()
     html = html.replace("</head>", (STUB_TEMPLATE % json.dumps(plan)) + "</head>")
     tail = (AUTO_ANSWER if auto_answer else "")
     tail += CLICK_CHIP if click_chip else ""
+    tail += (CLICK_OFFER % click_offer) if click_offer else ""
     tail += "<script>" + (REPORTER % settle_ms) + "</script>"
     html = html.replace("</body>", tail + "</body>")
     page = tmp / "interview.html"
@@ -463,6 +497,44 @@ def check_interview(chrome: str) -> int:
             (chips.get("context_more_relabelled"), "true", "the toggle relabels to show less"),
         ]
 
+        # The questions are over and the agent is deciding what follows.
+        holding = run_interview_case(
+            chrome, {"polls": [{"holding": True}, {"waiting": True}]}, 700, tmp
+        )
+        expectations += [
+            (holding.get("wait_copy"), "That's t", "the wrap-up says the questions are over"),
+        ]
+
+        offer_plan = {
+            "polls": [
+                {"offer": {"questionnaire_id": "f", "title": "Pinning it down",
+                           "message": "Two things worth deciding.", "questions": 2}},
+                {"waiting": True},
+            ]
+        }
+        offered = run_interview_case(chrome, offer_plan, 700, tmp)
+        expectations += [
+            (offered.get("offer_shown"), "true", "a follow-up is offered, not imposed"),
+            (offered.get("offer_title"), "Pinning it d", "the offer names the questionnaire"),
+            (offered.get("offer_count"), "2 questions", "the offer says how many questions"),
+        ]
+
+        declined = run_interview_case(
+            chrome, offer_plan, 900, tmp, click_offer="ivOfferSkip"
+        )
+        expectations += [
+            (declined.get("calls"), "/decline", "declining posts the decline"),
+            (declined.get("state_done"), "true", "declining lands on you-can-close-this"),
+        ]
+
+        accepted = run_interview_case(
+            chrome, offer_plan, 900, tmp, click_offer="ivOfferTake"
+        )
+        expectations += [
+            (accepted.get("calls"), "/accept", "accepting posts the accept"),
+            (accepted.get("offer_shown"), "true", "the page waits rather than half-leaving"),
+        ]
+
         # The agent dies. The page must say so rather than animate forever.
         lost = run_interview_case(chrome, {"failEverything": True}, 14000, tmp)
         expectations += [
@@ -537,7 +609,7 @@ def main() -> int:
 
     interview_failures = check_interview(chrome)
     failures += interview_failures
-    ran += 24
+    ran += 32
 
     print()
     if failures:
