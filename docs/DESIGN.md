@@ -16,6 +16,8 @@ The constraints this tool is built under, why they hold, and how it is checked.
 
 **Validation fails at load.** A duplicate id, a forward-referencing conditional, or a recommendation naming an option that does not exist costs a round trip with a human — which is the exact cost the tool exists to remove.
 
+**A turn arrives whole.** The agent's reasoning never streams into the page. Watching a question form makes a respondent answer a version of it that has not finished being asked, and the wait itself is generative — it is where someone reconsiders what they just said and notices what they meant to add. `ask` blocks until the question and its context are both composed, and the waiting state deliberately shows nothing of the process. This is the reason interview mode reads differently from the same conversation in a terminal.
+
 ---
 
 ## How it is put together
@@ -44,11 +46,11 @@ Two things are worth knowing before changing anything.
 ## Testing
 
 ```bash
-python3 -m unittest discover -s tests -t .   # 94 tests
+python3 -m unittest discover -s tests -t .   # 107 tests
 python3 scripts/check_browser.py             # 41 client-side checks
 ```
 
-The Python suite covers spec validation, response building, conditional visibility, persistence, rendering, path resolution, config, follow-up panels, and the interview state machine.
+The Python suite covers spec validation, response building, conditional visibility, persistence, rendering, path resolution, config, follow-up panels, the interview state machine, and `distill` — the last driven through the CLI, since `qsurface.py` shares a name with the `qsurface` package and the package wins any plain import.
 
 The client-side checks cover `assets/app.js` and `assets/interview.js`, which the Python suite cannot reach. They drive a real Chromium-family browser if one is installed and skip cleanly if not, rather than pulling in a JavaScript toolchain and breaking the no-build-step constraint. `--require` turns a missing browser into a failure, which is what CI uses.
 

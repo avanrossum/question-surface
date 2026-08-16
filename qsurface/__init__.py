@@ -9,4 +9,4 @@ in a form an agent reads directly.
 Entry point is `qsurface.py` at the project root.
 """
 
-__version__ = "1.4.0"
+__version__ = "1.4.1"

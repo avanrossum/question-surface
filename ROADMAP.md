@@ -14,6 +14,22 @@ Still open from those designs:
 - **Resuming a closed interview.** A follow-up session that carries the previous transcript, the way `follows` works for questionnaires.
 - **Dictation on questionnaire `longtext` fields.** The nudge exists in interview mode; the same hint would help on long-form form fields.
 
+## From the build retro
+
+Both of these came out of the `build-retro` interview, and both came out of the *waiting* between questions rather than from being asked what to build.
+
+### Team retros
+
+A lead sends the same two or three opening questions to each member of a team, each interview forks from there on its own thread, and the answers are synthesized at the end.
+
+This is the first thing that does not fit the current model. Everything today assumes one session, one respondent, one transcript — one detached server per interview, keyed by a session file in the project. Several people answering in parallel needs a different shape for identity, for storage, and for who is allowed to see whose answers. Worth designing properly rather than growing into.
+
+### Voice mode
+
+Conducting an interview spoken rather than typed: text-to-speech for the question, and a local alternative to Whisper for the answer.
+
+Notable as the only thing so far that could justify revisiting the standard-library-only rule. The current dictation nudge points at the operating system's own dictation precisely because it needs no dependency, and that is a workaround rather than the feature. A genuinely spoken interview needs real components, and the constraint should be broken deliberately and visibly if it is broken at all — probably as an optional extra rather than in the core.
+
 ## Considered and deferred
 
 ### MCP server
@@ -36,6 +52,7 @@ Raised when the name was confirmed: "unless you know what it is, you don't reall
 
 ## Not planned
 
+- **Streaming the agent's reasoning into the page.** Settled in the `build-retro` interview and no longer an open question. Nothing streams today because `ask` blocks until the whole question is composed, which was an accident of implementation — but the correct one. Watching a question form makes a respondent start composing against a version of it that has not finished being asked. Worse, the silence is doing work of its own: a moment to reconsider what was just said, notice what was left out, and decide where to take it next. A "thinking out loud" feed would remove that, and it is not a cost the design tolerates — it is something the design provides.
 - **An interface of its own.** No Electron, no SPA, no desktop app. Launching a browser at a local page is the whole design and it works.
 - **Anything reachable off the machine.** Loopback only, no auth, no session model, no multi-tenancy. There must never be a reason to expose it.
 - **Runtime dependencies.** Standard library only. The tool has to still run in a year without anyone maintaining a lockfile.

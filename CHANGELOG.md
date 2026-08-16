@@ -4,6 +4,18 @@ Semver. Newest first. The tool carries its own version because questionnaires au
 
 ---
 
+## 1.4.1 — 2026-08-16
+
+### Added
+
+- **Tests for `interview distill`**, which shipped in 1.4.0 verified only by hand. Thirteen of them, driven through the CLI and shaped from a real transcript: the spec validates, follows its interview, carries the material across, marks every question as a draft, honours `--only`, and refuses to overwrite, to distill a missing interview, or to distill a questionnaire response. 107 Python tests.
+- **A design principle, written down** — a turn arrives whole, and the agent's reasoning never streams into the page. Recorded in `docs/DESIGN.md` and as a non-goal in the roadmap.
+- **Two roadmap entries from the `build-retro` interview**: team retros (several respondents answering the same opening questions, forking individually, synthesized at the end) and voice mode (the only candidate so far for deliberately breaking the standard-library-only rule).
+
+### Notes
+
+- The no-streaming behaviour was an accident of `ask` blocking until a question is composed. It is now a decision: watching a question form makes a respondent answer a version of it that has not finished being asked, and the silence between turns is where they reconsider what they just said. The waiting state is not dead time being decorated.
+
 ## 1.4.0 — 2026-08-14
 
 ### Added
