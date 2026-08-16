@@ -185,6 +185,15 @@ class TestDistillRefusals(DistillTestCase):
         self.assertNotEqual(result.returncode, 0)
         self.assertIn("no transcript", result.stderr)
 
+    def test_out_must_be_an_id_not_a_path(self):
+        # Joining an absolute path discards the base directory, so an unchecked
+        # --out writes the spec anywhere on disk.
+        for bad in ("/tmp/escaped", "../escaped", "with/slash"):
+            result = self.distill("retro", "--out", bad)
+            self.assertNotEqual(result.returncode, 0, bad)
+            self.assertIn("not a questionnaire id", result.stderr)
+        self.assertFalse(Path("/tmp/escaped.json").exists())
+
     def test_a_questionnaire_response_is_not_an_interview(self):
         directory = self.project / ".question-surface" / "responses" / "a-form"
         directory.mkdir(parents=True)

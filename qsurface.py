@@ -647,6 +647,14 @@ def cmd_interview_distill(args) -> int:
         )
 
     questionnaire_id = args.out or f"{args.interview}-decisions"
+    # An id, not a path. Without this a value like `/tmp/x` or `../x` walks out
+    # of the questionnaires directory, because joining an absolute path
+    # discards the base — and writes a spec whose id would never validate.
+    if not questionnaire_id.replace("-", "").replace("_", "").isalnum():
+        raise SystemExit(
+            f"error: {questionnaire_id!r} is not a questionnaire id — "
+            "letters, digits, - and _ only"
+        )
     spec = {
         "id": questionnaire_id,
         "title": f"{transcript.get('title', args.interview)} — decisions",

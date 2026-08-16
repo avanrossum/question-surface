@@ -4,6 +4,16 @@ Semver. Newest first. The tool carries its own version because questionnaires au
 
 ---
 
+## 1.4.2 — 2026-08-16
+
+### Fixed
+
+- **`distill --out` accepted a path and escaped the questionnaires directory.** Joining an absolute path discards the base, so `--out /tmp/x` wrote the spec to `/tmp/x.json` with an `id` that would never have validated. It is an id now, checked like every other id. Found by running the command with a scratch path during the first live distill.
+
+### Notes
+
+- The first live distill also showed where the command is weak, recorded in the roadmap: it emits one draft per exchange, but an answer contains zero, one, or several decidable things. Two of four drafts from a real retro were empty and one held three separate forks.
+
 ## 1.4.1 — 2026-08-16
 
 ### Added

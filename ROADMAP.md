@@ -14,6 +14,14 @@ Still open from those designs:
 - **Resuming a closed interview.** A follow-up session that carries the previous transcript, the way `follows` works for questionnaires.
 - **Dictation on questionnaire `longtext` fields.** The nudge exists in interview mode; the same hint would help on long-form form fields.
 
+## Sharpening distill
+
+The first live run showed the command's unit is wrong. It emits one draft question per exchange, but an exchange is not a decision — an answer holds zero, one, or several. In a real retro of four exchanges, two produced empty drafts (pure history, and "nothing that stands out"), one held a decision already made, and one contained three separate forks compressed into a single slot.
+
+What holds up is the material handling: the `info` blocks carrying each exchange, and the `follows` wiring that puts the conversation above the questions. What does not is the 1:1 draft.
+
+Likely shape: the agent reads the transcript anyway, so let it pass the decisions it found — `--decision "..."`, repeatable, or a small JSON file — and have `distill` do what it is good at, which is preserving the material and wiring the spec. The current behaviour stays as the default for when the agent wants a starting point rather than a blank page.
+
 ## From the build retro
 
 Both of these came out of the `build-retro` interview, and both came out of the *waiting* between questions rather than from being asked what to build.
