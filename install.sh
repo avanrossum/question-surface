@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Install Question Surface for the current user.
+# Install Docket for the current user.
 #
 #   ./install.sh              interactive
 #   ./install.sh --yes        take the default for every prompt
@@ -7,8 +7,8 @@
 #
 # Three things get wired up, each independently skippable:
 #
-#   1. `qsurface` on PATH, as a symlink into this clone.
-#   2. The `question-surface` skill symlinked into ~/.claude/skills/, so every
+#   1. `docket` on PATH, as a symlink into this clone.
+#   2. The `docket` skill symlinked into ~/.claude/skills/, so every
 #      Claude Code session in every project can see it.
 #   3. A pointer line in ~/.claude/CLAUDE.md carrying the current gate, because
 #      a skill is text an agent reads rather than a program that can look a
@@ -21,13 +21,20 @@
 set -euo pipefail
 
 ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-BIN_DIR="${QSURFACE_BIN_DIR:-$HOME/.local/bin}"
-BIN_LINK="$BIN_DIR/qsurface"
+BIN_DIR="${DOCKET_BIN_DIR:-$HOME/.local/bin}"
+BIN_LINK="$BIN_DIR/docket"
 SKILL_DIR="$HOME/.claude/skills"
-SKILL_LINK="$SKILL_DIR/question-surface"
+SKILL_LINK="$SKILL_DIR/docket"
 CLAUDE_MD="$HOME/.claude/CLAUDE.md"
-BEGIN_MARK="<!-- question-surface:begin -->"
-END_MARK="<!-- question-surface:end -->"
+BEGIN_MARK="<!-- docket:begin -->"
+END_MARK="<!-- docket:end -->"
+# Pre-2.0 names. An install from before the rename would otherwise leave a
+# `qsurface` command and skill on disk pointing into this clone, still working
+# and silently shadowing nothing — orphaned rather than removed.
+LEGACY_BIN="$BIN_DIR/qsurface"
+LEGACY_SKILL="$SKILL_DIR/question-surface"
+LEGACY_BEGIN="<!-- question-surface:begin -->"
+LEGACY_END="<!-- question-surface:end -->"
 
 ASSUME_YES=0
 UNINSTALL=0
@@ -73,7 +80,7 @@ strip_pointer() {
 # ---------------------------------------------------------------- uninstall --
 
 if [ "$UNINSTALL" = "1" ]; then
-  step "Removing Question Surface"
+  step "Removing Docket"
   [ -L "$BIN_LINK" ]   && { rm -f "$BIN_LINK";   say "removed $BIN_LINK"; }   || say "no CLI link"
   [ -L "$SKILL_LINK" ] && { rm -f "$SKILL_LINK"; say "removed $SKILL_LINK"; } || say "no skill link"
   if [ -f "$CLAUDE_MD" ] && grep -q "$BEGIN_MARK" "$CLAUDE_MD"; then
@@ -82,7 +89,9 @@ if [ "$UNINSTALL" = "1" ]; then
   else
     say "no pointer block in CLAUDE.md"
   fi
-  say "config left at $(python3 -c 'import sys; sys.path.insert(0,"'"$ROOT"'"); from qsurface import config; print(config.config_path())' 2>/dev/null || echo '~/.config/question-surface/')"
+  [ -L "$LEGACY_BIN" ]   && { rm -f "$LEGACY_BIN";   say "removed pre-2.0 $LEGACY_BIN"; }   || true
+  [ -L "$LEGACY_SKILL" ] && { rm -f "$LEGACY_SKILL"; say "removed pre-2.0 $LEGACY_SKILL"; } || true
+  say "config left at $(python3 -c 'import sys; sys.path.insert(0,"'"$ROOT"'"); from docket import config; print(config.config_path())' 2>/dev/null || echo '~/.config/docket/')"
   say "this clone was not deleted"
   echo
   exit 0
@@ -90,7 +99,10 @@ fi
 
 # ------------------------------------------------------------------ install --
 
-step "Question Surface — installing from $ROOT"
+step "Docket — installing from $ROOT"
+say "Docket collects your coding agent's open questions into one page you clear"
+say "in a sitting, and keeps the answers as a record you can commit next to the"
+say "code they decided."
 
 if ! command -v python3 >/dev/null 2>&1; then
   echo "  python3 is required and was not found on PATH" >&2
@@ -105,9 +117,17 @@ say "python $PYV"
 
 step "1. Command on PATH"
 mkdir -p "$BIN_DIR"
-ln -sfn "$ROOT/qsurface.py" "$BIN_LINK"
-chmod +x "$ROOT/qsurface.py"
-say "$BIN_LINK -> $ROOT/qsurface.py"
+if [ -L "$LEGACY_BIN" ]; then
+  rm -f "$LEGACY_BIN"
+  say "removed the pre-2.0 \`qsurface\` command — it is \`docket\` now"
+fi
+if [ -L "$LEGACY_SKILL" ]; then
+  rm -f "$LEGACY_SKILL"
+  say "removed the pre-2.0 question-surface skill"
+fi
+ln -sfn "$ROOT/docket.py" "$BIN_LINK"
+chmod +x "$ROOT/docket.py"
+say "$BIN_LINK -> $ROOT/docket.py"
 case ":$PATH:" in
   *":$BIN_DIR:"*) say "$BIN_DIR is on PATH" ;;
   *) say "NOTE: $BIN_DIR is not on PATH — add this to your shell profile:"
@@ -119,21 +139,21 @@ if [ -e "$SKILL_LINK" ] && [ ! -L "$SKILL_LINK" ]; then
   say "SKIPPED: $SKILL_LINK exists and is not a symlink — not overwriting it"
 else
   mkdir -p "$SKILL_DIR"
-  ln -sfn "$ROOT/.claude/skills/question-surface" "$SKILL_LINK"
-  say "$SKILL_LINK -> $ROOT/.claude/skills/question-surface"
+  ln -sfn "$ROOT/.claude/skills/docket" "$SKILL_LINK"
+  say "$SKILL_LINK -> $ROOT/.claude/skills/docket"
 fi
 
 step "3. Gate pointer in $CLAUDE_MD"
 GATE_LINE="$(python3 -c "
 import sys
 sys.path.insert(0, '$ROOT')
-from qsurface import config
+from docket import config
 print(config.gate_sentence())
 ")"
 say "The line to add:"
 printf '\n    %s\n\n' "$GATE_LINE"
 say "Without it an agent assumes the default gate. Change it later with"
-say "\`qsurface config gate <n>\` and re-run this script."
+say "\`docket config gate <n>\` and re-run this script."
 if confirm "Add it to your global CLAUDE.md?"; then
   mkdir -p "$(dirname "$CLAUDE_MD")"
   touch "$CLAUDE_MD"
@@ -149,8 +169,8 @@ else
 fi
 
 step "Checking the install"
-python3 "$ROOT/qsurface.py" doctor || true
+python3 "$ROOT/docket.py" doctor || true
 
 echo
-say "Done. Try: qsurface list"
+say "Done. Try: docket list"
 echo

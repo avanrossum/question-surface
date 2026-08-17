@@ -23,7 +23,7 @@ import sys
 
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 
-from qsurface import interview, paths, spec as spec_mod, store  # noqa: E402
+from docket import interview, paths, spec as spec_mod, store  # noqa: E402
 
 
 class InterviewTestCase(unittest.TestCase):
@@ -32,7 +32,7 @@ class InterviewTestCase(unittest.TestCase):
         self.root = Path(self.tmp.name).resolve()
         self.addCleanup(self.tmp.cleanup)
         patcher = mock.patch.dict(
-            os.environ, {"QSURFACE_PROJECT": str(self.root)}, clear=False
+            os.environ, {"DOCKET_PROJECT": str(self.root)}, clear=False
         )
         patcher.start()
         self.addCleanup(patcher.stop)

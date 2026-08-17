@@ -6,9 +6,9 @@ reads what came back, and decides what to ask next. That needs the server alive
 across many turns rather than blocking once and exiting, which is why this is a
 separate module and a separate lifecycle.
 
-    qsurface interview open <id> --title "..."   starts a detached server
-    qsurface interview ask <id> --prompt "..."   pushes one question, waits, prints the answer
-    qsurface interview close <id>                writes the transcript and shuts down
+    docket interview open <id> --title "..."   starts a detached server
+    docket interview ask <id> --prompt "..."   pushes one question, waits, prints the answer
+    docket interview close <id>                writes the transcript and shuts down
 
 The server process is detached so `open` can return and let the agent keep
 working. It holds the session in memory and writes the transcript to disk after
@@ -56,7 +56,7 @@ def read_session(interview_id: str) -> dict:
     if not path.exists():
         raise FileNotFoundError(
             f"no interview {interview_id!r} is open — start one with "
-            f"`qsurface interview open {interview_id}`"
+            f"`docket interview open {interview_id}`"
         )
     return json.loads(path.read_text(encoding="utf-8"))
 
@@ -383,7 +383,7 @@ def serve(record: dict) -> None:
             pass
 
         def _authorized(self) -> bool:
-            return self.headers.get("X-QSurface-Token") == token
+            return self.headers.get("X-Docket-Token") == token
 
         def do_GET(self):
             route = self.path.split("?")[0]
@@ -598,7 +598,7 @@ def control(session: dict, route: str, payload: dict, timeout: float | None = No
         data=json.dumps(payload).encode("utf-8"),
         headers={
             "Content-Type": "application/json",
-            "X-QSurface-Token": session["token"],
+            "X-Docket-Token": session["token"],
         },
         method="POST",
     )
@@ -609,7 +609,7 @@ def control(session: dict, route: str, payload: dict, timeout: float | None = No
 def health(session: dict, timeout: float = 2.0) -> dict | None:
     request = urllib.request.Request(
         f"http://127.0.0.1:{session['port']}/control/state",
-        headers={"X-QSurface-Token": session["token"]},
+        headers={"X-Docket-Token": session["token"]},
     )
     try:
         with urllib.request.urlopen(request, timeout=timeout) as response:

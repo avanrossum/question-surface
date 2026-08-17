@@ -23,7 +23,7 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parent.parent
 sys.path.insert(0, str(ROOT))
 
-from qsurface import browser, render, spec as spec_mod  # noqa: E402
+from docket import browser, render, spec as spec_mod  # noqa: E402
 
 SPEC = {
     "id": "browser-check",
@@ -131,13 +131,13 @@ HARNESS = """
     log("close_toggle_present", !!toggle);
     log("close_toggle_default_off", toggle && toggle.checked === false);
     var storage = true;
-    try { localStorage.setItem("qsurface:probe", "1"); localStorage.removeItem("qsurface:probe"); }
+    try { localStorage.setItem("docket:probe", "1"); localStorage.removeItem("docket:probe"); }
     catch (e) { storage = false; }
     log("storage_available", storage);
     if (toggle && storage) {
       toggle.checked = true;
       toggle.dispatchEvent(new Event("change", { bubbles: true }));
-      log("close_toggle_persists", localStorage.getItem("qsurface:close-on-submit") === "1");
+      log("close_toggle_persists", localStorage.getItem("docket:close-on-submit") === "1");
     }
   } catch (err) {
     log("harness_error", String(err && err.message || err));
@@ -254,7 +254,7 @@ setTimeout(function () {
 
 
 def interview_page_html() -> str:
-    from qsurface import interview  # noqa: PLC0415
+    from docket import interview  # noqa: PLC0415
 
     record = interview.new_record("check", "Interview check", "systems design", 0)
     return render.interview_page(record)
@@ -388,7 +388,7 @@ MOTION_HARNESS = """
 
 
 def check_processing_motion(chrome: str, tmp: Path) -> list:
-    from qsurface import interview  # noqa: PLC0415
+    from docket import interview  # noqa: PLC0415
 
     record = interview.new_record("motion", "Motion check", "", 0)
     html = render.interview_page(record)

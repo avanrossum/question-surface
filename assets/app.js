@@ -1,4 +1,4 @@
-/* Question Surface — form behaviour.
+/* Docket — form behaviour.
    No dependencies. Answers live in a single `state` object keyed by question id;
    every interaction funnels through setValue() so conditionals, progress and
    draft persistence all update from one place. */
@@ -7,7 +7,7 @@
   "use strict";
 
   var CFG = window.__QS__ || {};
-  var STORAGE_KEY = "qsurface:" + CFG.id;
+  var STORAGE_KEY = "docket:" + CFG.id;
   var state = {};
   var draftTimer = null;
 
@@ -25,7 +25,7 @@
      works, not about this questionnaire, so it is stored globally rather than
      per-id. It ships off; once turned on it stays on, and the box is visible
      on every form so it is never a surprise. */
-  var CLOSE_KEY = "qsurface:close-on-submit";
+  var CLOSE_KEY = "docket:close-on-submit";
   if (closeToggle) {
     try {
       closeToggle.checked = localStorage.getItem(CLOSE_KEY) === "1";
@@ -405,7 +405,7 @@
 
     if (CFG.standalone) {
       show("ok", "<h2>Preview mode</h2><p>This is a standalone render with no " +
-        "server behind it. Run <code>qsurface serve</code> to capture answers.</p>" +
+        "server behind it. Run <code>docket serve</code> to capture answers.</p>" +
         "<pre>" + escapeHtml(JSON.stringify(payload(), null, 2)) + "</pre>");
       return;
     }

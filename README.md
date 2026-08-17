@@ -1,14 +1,16 @@
-# Question Surface
+# Docket
 
 > "Ok, you know what? Please just put all the questions you have for me in a form on an HTML page that saves the answers to a file and I'll answer them all at once."
 
 That was the original request, made mid-session out of irritation at answering a numbered list one item at a time. This is what it became.
 
-[![tests](https://github.com/avanrossum/question-surface/actions/workflows/test.yml/badge.svg)](https://github.com/avanrossum/question-surface/actions/workflows/test.yml)
+[![tests](https://github.com/avanrossum/docket/actions/workflows/test.yml/badge.svg)](https://github.com/avanrossum/docket/actions/workflows/test.yml)
 ![python](https://img.shields.io/badge/python-3.9%2B-blue)
 ![dependencies](https://img.shields.io/badge/dependencies-none-brightgreen)
 
-Question Surface gives a coding agent a real surface for asking you things. It builds a page on demand, serves it on loopback, and shuts down when you are done. The answers land on disk as JSON the agent reads directly, and as markdown you can commit next to the code the decisions are about.
+Docket collects your coding agent's open questions into one page you clear in a sitting, and keeps the answers as a record you can commit next to the code they decided.
+
+It builds the page on demand, serves it on loopback, and shuts down when you are done. The answers land on disk as JSON the agent reads directly, and as markdown that diffs.
 
 Two modes, and they work in sequence as often as alone.
 
@@ -19,21 +21,21 @@ Two modes, and they work in sequence as often as alone.
 ## Install
 
 ```bash
-git clone https://github.com/avanrossum/question-surface.git
-cd question-surface
+git clone https://github.com/avanrossum/docket.git
+cd docket
 ./install.sh
 ```
 
 Python 3.9+ and nothing else. No npm, no pip install, no build step, no lockfile to rot.
 
-The installer puts `qsurface` on your PATH, symlinks the skill into `~/.claude/skills/` so every Claude Code session can see it, and offers to add one line to your global `CLAUDE.md`. It asks before that last one, and `./install.sh --uninstall` removes everything it added. Run `qsurface doctor` any time to see what is wired up.
+The installer puts `docket` on your PATH, symlinks the skill into `~/.claude/skills/` so every Claude Code session can see it, and offers to add one line to your global `CLAUDE.md`. It asks before that last one, and `./install.sh --uninstall` removes everything it added. Run `docket doctor` any time to see what is wired up.
 
 ---
 
 ## A form, when the agent knows what to ask
 
 ```bash
-qsurface serve session-storage
+docket serve session-storage
 ```
 
 Every question can carry a `why` line saying what the answer unblocks, a recommendation to react to, a "Don't know — flag for research" toggle, and a notes box. Conditionals branch properly, evaluated the same way in the browser and on the server. Drafts survive a closed tab, a crashed browser, and a restarted machine.
@@ -43,7 +45,7 @@ The response records more than your answers. `flagged_unknown` separates "I don'
 ## An interview, when each answer should decide the next question
 
 ```bash
-qsurface interview open outage --domain "incident review"
+docket interview open outage --domain "incident review"
 ```
 
 One question at a time. You answer, the agent reads it, and the next question comes from what you actually said.
@@ -57,7 +59,7 @@ The skill tells the agent to conduct it as an expert interviewer in a stated or 
 ## And then a form, to pin down what the interview turned up
 
 ```bash
-qsurface interview distill outage
+docket interview distill outage
 ```
 
 An interview reliably ends with things that have become precise enough to decide rather than discuss. `distill` scaffolds a questionnaire from the transcript, carrying each exchange across as a marked draft for the agent to rewrite. Serving it shows the interview above the questions, so nobody is reconstructing the conversation from memory.
@@ -72,11 +74,11 @@ Declining is a normal answer, and the transcript records which it was.
 
 ---
 
-## Why "Question Surface"?
+## Why "Docket"?
 
-Because it's a surface. For questions.
+A docket is a list of matters awaiting decision, and the record of how each one was disposed of. That is what this hands you, so the name is a description rather than a label.
 
-It was named mid-session in the same mood that produced it, and it stuck because it is accurate. The name tells you nothing at all until you have used the thing once, which is what the rest of this page is for. The command is `qsurface`, which is fun to say and harder to justify.
+It was called Question Surface for its first three days, which named the input widget at the moment every agent harness was absorbing input widgets as built-ins. The record is the part worth naming.
 
 ---
 
@@ -102,7 +104,7 @@ That last part was an accident. "No bugs. Make no mistakes." went into the origi
 
 ## The story is in the repo
 
-This README was structured from an interview conducted with the tool itself. The transcript is in [`.question-surface/responses/readme-shape/`](.question-surface/responses/) — the questions, the answers, and what changed because of them. The decisions that shaped the tool are in the same directory, from the questionnaires that settled them.
+This README was structured from an interview conducted with the tool itself. The transcript is in [`.docket/responses/readme-shape/`](.docket/responses/) — the questions, the answers, and what changed because of them. The decisions that shaped the tool are in the same directory, from the questionnaires that settled them.
 
 That is the tool's own argument, applied to itself: a decision that exists only in a chat transcript is a decision nobody can find later.
 

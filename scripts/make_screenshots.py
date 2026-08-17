@@ -21,7 +21,7 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parent.parent
 sys.path.insert(0, str(ROOT))
 
-from qsurface import browser, render, spec as spec_mod, store  # noqa: E402
+from docket import browser, render, spec as spec_mod, store  # noqa: E402
 
 OUT = ROOT / "docs" / "images"
 
@@ -286,7 +286,7 @@ document.getElementById("ivOfferCount").textContent = "3 questions";
 
 
 def interview_shots(chrome: str) -> None:
-    from qsurface import interview  # noqa: PLC0415
+    from docket import interview  # noqa: PLC0415
 
     record = interview.new_record(
         "demo", "Interviewing you about the storage rewrite", "systems design", 0

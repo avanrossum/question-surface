@@ -7,18 +7,18 @@ Every command, where files land, and how an agent drives the tool.
 ## Commands
 
 ```bash
-qsurface list                        # questionnaires and response counts
-qsurface new <id> --title "..."      # scaffold a questionnaire
-qsurface validate <id>               # check a spec without serving it
-qsurface serve <id>                  # serve, block until submitted
-qsurface show <id>                   # summarize the latest response
-qsurface show <id> --path-only       # just the latest JSON path
-qsurface show <id> --open            # open the markdown render for reading
-qsurface render <id> -o out.html     # standalone preview, no server
-qsurface archive <id>                # retire a questionnaire, keep its responses
-qsurface config [key] [value]        # per-user settings
-qsurface doctor                      # check the install
-qsurface --version
+docket list                        # questionnaires and response counts
+docket new <id> --title "..."      # scaffold a questionnaire
+docket validate <id>               # check a spec without serving it
+docket serve <id>                  # serve, block until submitted
+docket show <id>                   # summarize the latest response
+docket show <id> --path-only       # just the latest JSON path
+docket show <id> --open            # open the markdown render for reading
+docket render <id> -o out.html     # standalone preview, no server
+docket archive <id>                # retire a questionnaire, keep its responses
+docket config [key] [value]        # per-user settings
+docket doctor                      # check the install
+docket --version
 ```
 
 Interview commands are in [INTERVIEWS.md](INTERVIEWS.md).
@@ -48,8 +48,8 @@ On timeout it writes no response and exits non-zero. The draft is saved, so re-s
 The count is per-user:
 
 ```bash
-qsurface config gate 3     # then re-run ./install.sh to refresh the pointer line
-qsurface config            # show current settings
+docket config gate 3     # then re-run ./install.sh to refresh the pointer line
+docket config            # show current settings
 ```
 
 A skill is static text an agent reads rather than a program that can look a setting up, which is why the installer writes the number into your global `CLAUDE.md`. Without that line an agent assumes the default.
@@ -66,7 +66,7 @@ Questionnaires and responses live in the project you are working in:
 
 ```
 <your project>/
-└── .question-surface/
+└── .docket/
     ├── questionnaires/<id>.json
     ├── responses/<id>/
     │   ├── <timestamp>.json    # the machine record
@@ -77,7 +77,7 @@ Questionnaires and responses live in the project you are working in:
 
 A decision belongs in the repository it is about, where it can be reviewed alongside the change it gates and found by whoever clones the project later. Responses are meant to be committed; the tool never touches your git index.
 
-The project root is the nearest enclosing repository, so it does not matter which subdirectory you run from. `QSURFACE_PROJECT` overrides it.
+The project root is the nearest enclosing repository, so it does not matter which subdirectory you run from. `DOCKET_PROJECT` overrides it.
 
 Questionnaire ids resolve against the project first, then the questionnaires bundled with the tool — which is how `example` stays readable from anywhere without being copied into projects.
 
@@ -96,8 +96,8 @@ The agent should run `serve` as a background command so the session stays respon
 Reading the answers back:
 
 ```bash
-qsurface show <id>              # summary and paths
-qsurface show <id> --path-only  # feed the JSON path to something else
+docket show <id>              # summary and paths
+docket show <id> --path-only  # feed the JSON path to something else
 ```
 
 `flagged_unknown` in a response is a work item rather than a non-answer. Those questions need research; the agent should do it or track it rather than asking again.

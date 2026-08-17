@@ -9,11 +9,11 @@ A form is right when the agent already knows every question. An interview is for
 ## Running one
 
 ```bash
-qsurface interview open <id> --title "..." --domain "systems design"
-qsurface interview ask <id> --prompt "..." --why "..."
-qsurface interview ask <id> --prompt "..."      # written from the last answer
-qsurface interview close <id> --summary "..."
-qsurface interview list                          # what is open
+docket interview open <id> --title "..." --domain "systems design"
+docket interview ask <id> --prompt "..." --why "..."
+docket interview ask <id> --prompt "..."      # written from the last answer
+docket interview close <id> --summary "..."
+docket interview list                          # what is open
 ```
 
 `open` starts a detached server and returns immediately, so the agent keeps working. `ask` pushes one question, blocks until you answer, and prints the answer as JSON. `close` writes the final transcript and shuts the server down.
@@ -73,9 +73,9 @@ Deliberately not the Web Speech API, which in Chrome sends audio to a recognitio
 When an interview ends with things that have become precise enough to decide, the form for them opens where the interview already is. Nobody goes hunting for a second URL, and nobody gets a questionnaire they did not agree to.
 
 ```bash
-qsurface interview hold <id>                                  # questions over, hold the page
+docket interview hold <id>                                  # questions over, hold the page
 # ...distill, author the follow-up, validate it...
-qsurface interview offer <id> --questionnaire <qid> \
+docket interview offer <id> --questionnaire <qid> \
     --message "Three things worth pinning down."              # blocks for the outcome
 ```
 
@@ -96,7 +96,7 @@ If there is nothing worth asking, skip both and `close` as usual.
 ## Turning an interview into a questionnaire
 
 ```bash
-qsurface interview distill <interview-id> [--out <id>] [--only 2,4,5] [--force]
+docket interview distill <interview-id> [--out <id>] [--only 2,4,5] [--force]
 ```
 
 An interview ends with material that has become precise enough to decide. `distill` writes a questionnaire scaffold from the transcript rather than making the agent retype it:
@@ -109,7 +109,7 @@ An interview ends with material that has become precise enough to decide. `disti
 
 ## The transcript
 
-Written after **every** answer, not only at close, so an interview interrupted halfway still leaves everything said so far. It lands beside questionnaire responses in `.question-surface/responses/<id>/`.
+Written after **every** answer, not only at close, so an interview interrupted halfway still leaves everything said so far. It lands beside questionnaire responses in `.docket/responses/<id>/`.
 
 ```json
 {
@@ -138,12 +138,12 @@ Written after **every** answer, not only at close, so an interview interrupted h
 
 The questions are kept as well as the answers, because they were generated rather than authored — a transcript holding only the answers is unreadable.
 
-`qsurface show <id>` summarizes it and marks a transcript that is still in progress.
+`docket show <id>` summarizes it and marks a transcript that is still in progress.
 
 ---
 
 ## Housekeeping
 
-Session state lives in `.question-surface/interviews/` and is not tracked. A server that loses its agent shuts down after four idle hours rather than holding a port forever, and `qsurface doctor` reports any session record left pointing at nothing.
+Session state lives in `.docket/interviews/` and is not tracked. A server that loses its agent shuts down after four idle hours rather than holding a port forever, and `docket doctor` reports any session record left pointing at nothing.
 
 Always `close`. Nothing is lost if you do not, but an unclosed session leaves a server running until it goes idle.

@@ -23,21 +23,21 @@ The constraints this tool is built under, why they hold, and how it is checked.
 ## How it is put together
 
 ```
-qsurface.py              CLI
-qsurface/spec.py         the single authority on what a valid questionnaire is
-qsurface/store.py        response building, visibility, persistence
-qsurface/render.py       spec and interview record → HTML
-qsurface/server.py       the loopback server for a questionnaire
-qsurface/interview.py    session state machine and detached server
-qsurface/paths.py        where questionnaires and responses live
-qsurface/config.py       per-user settings
-qsurface/browser.py      locating and driving a headless browser
+docket.py              CLI
+docket/spec.py         the single authority on what a valid questionnaire is
+docket/store.py        response building, visibility, persistence
+docket/render.py       spec and interview record → HTML
+docket/server.py       the loopback server for a questionnaire
+docket/interview.py    session state machine and detached server
+docket/paths.py        where questionnaires and responses live
+docket/config.py       per-user settings
+docket/browser.py      locating and driving a headless browser
 assets/                  app.css, app.js, interview.css, interview.js — inlined at render
 ```
 
 Two things are worth knowing before changing anything.
 
-**Conditionals are evaluated twice**, in `assets/app.js` and in `qsurface/store.py`, and the two must agree. Changing one without the other produces a form that shows a question the server records as skipped, or the reverse. There are tests on both sides.
+**Conditionals are evaluated twice**, in `assets/app.js` and in `docket/store.py`, and the two must agree. Changing one without the other produces a form that shows a question the server records as skipped, or the reverse. There are tests on both sides.
 
 **Hidden means empty, on both sides.** When a branch hides, the client clears the control as well as the stored value, and the server drops notes, resolved labels, and recommendation verdicts for anything not visible. Half-clearing produces a form that looks answered and submits blank — which is exactly the bug that shipped once already.
 
@@ -50,7 +50,7 @@ python3 -m unittest discover -s tests -t .   # 117 tests
 python3 scripts/check_browser.py             # 49 client-side checks
 ```
 
-The Python suite covers spec validation, response building, conditional visibility, persistence, rendering, path resolution, config, follow-up panels, the interview state machine, and `distill` — the last driven through the CLI, since `qsurface.py` shares a name with the `qsurface` package and the package wins any plain import.
+The Python suite covers spec validation, response building, conditional visibility, persistence, rendering, path resolution, config, follow-up panels, the interview state machine, and `distill` — the last driven through the CLI, since `docket.py` shares a name with the `docket` package and the package wins any plain import.
 
 The client-side checks cover `assets/app.js` and `assets/interview.js`, which the Python suite cannot reach. They drive a real Chromium-family browser if one is installed and skip cleanly if not, rather than pulling in a JavaScript toolchain and breaking the no-build-step constraint. `--require` turns a missing browser into a failure, which is what CI uses.
 
@@ -80,7 +80,7 @@ CSS animations do not advance under Chrome's `--virtual-time-budget`. Any check 
 Semver, annotated tags, and a changelog entry per release.
 
 1. Update `CHANGELOG.md` with what changed and why.
-2. Bump `__version__` in `qsurface/__init__.py`.
+2. Bump `__version__` in `docket/__init__.py`.
 3. Run both suites.
 4. Commit, then `git tag -a vX.Y.Z -m "..."`.
 

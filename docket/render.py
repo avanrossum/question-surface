@@ -2,7 +2,7 @@
 
 CSS and JS live as real files under `assets/` and are inlined at render time.
 That keeps them editable as first-class source while the rendered output stays a
-single self-contained document, which is what makes `qsurface render` able to
+single self-contained document, which is what makes `docket render` able to
 emit a standalone preview file with no server behind it.
 
 All spec-supplied text is HTML-escaped before any inline formatting is applied,
@@ -188,7 +188,7 @@ def render(
 <div class="layout">
   <aside class="sidebar">
     <div class="sidebar-inner">
-      <div class="brand">Question Surface</div>
+      <div class="brand">Docket</div>
       <div class="progress-readout"><span id="progressCount">0</span> of {len(questions)} answered</div>
       <nav class="nav">{nav_html}</nav>
       {docs_html}

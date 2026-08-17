@@ -1,8 +1,33 @@
-# Changelog — Question Surface
+# Changelog — Docket
 
 Semver. Newest first. The tool carries its own version because questionnaires authored against one spec format have to keep working against later ones.
 
 ---
+
+## 2.0.0 — 2026-08-17
+
+**Question Surface is now Docket.** A docket is a list of matters awaiting decision and the record of how each was disposed of, which is what the tool hands you. The old name described the input widget at the moment agent harnesses began absorbing input widgets as built-ins; the committed decision record is the part worth naming. Reasoning in `~/Developer/The_CEO/consultations/question-surface/`.
+
+Done before the first external install, which is the only ordering in which a rename is free rather than a migration.
+
+### Breaking
+
+- **The project state directory is `.docket/`**, not `.question-surface/`. Any project already holding one should `git mv` it; the tool reads only the new name.
+- **The command is `docket`.** `qsurface` is gone rather than aliased. `./install.sh` removes a pre-2.0 `qsurface` symlink and skill rather than leaving them orphaned on PATH.
+- **The Python package is `docket/`** and the entry point is `docket.py`. As before, the script and the package share a name and the package wins any plain import, which is why the `distill` tests drive the CLI as a subprocess.
+- **The skill is `docket`**, and config lives in `$XDG_CONFIG_HOME/docket/`.
+- The repository is `github.com/avanrossum/docket`. GitHub redirects the old URL permanently, so existing remotes keep working.
+
+### Changed
+
+- **The tagline is locked to the name** and appears identically in the repo description, the skill description, the README's opening line, and the install banner: *Docket collects your coding agent's open questions into one page you clear in a sitting, and keeps the answers as a record you can commit next to the code they decided.*
+- The README's naming section says what a docket is instead of joking that the name explains nothing, which was the problem being fixed.
+- `ROADMAP.md` closes the naming question it opened on 2026-08-14.
+
+### Not changed
+
+- **The tracked decision records keep the words they were written with.** The transcripts under `.docket/` still discuss a tool called Question Surface, because that is what it was called when they were recorded. A record edited to match the present is not a record. The same applies to the changelog entries below this one.
+- Every v1 tag stays where it is.
 
 ## 1.5.0 — 2026-08-16
 

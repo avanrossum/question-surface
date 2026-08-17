@@ -1,7 +1,7 @@
-"""Tests for `qsurface interview distill`.
+"""Tests for `docket interview distill`.
 
-Driven through the CLI rather than by importing it: `qsurface.py` shares its
-name with the `qsurface` package, so the package wins any plain import, and
+Driven through the CLI rather than by importing it: `docket.py` shares its
+name with the `docket` package, so the package wins any plain import, and
 running the command is the truer test anyway.
 
 The fixture is shaped from a real transcript — `build-retro`, tracked in this
@@ -24,7 +24,7 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parent.parent
 sys.path.insert(0, str(ROOT))
 
-from qsurface import spec as spec_mod  # noqa: E402
+from docket import spec as spec_mod  # noqa: E402
 
 TRANSCRIPT = {
     "interview_id": "retro",
@@ -75,16 +75,16 @@ class DistillTestCase(unittest.TestCase):
         self.tmp = tempfile.TemporaryDirectory()
         self.project = Path(self.tmp.name).resolve()
         self.addCleanup(self.tmp.cleanup)
-        directory = self.project / ".question-surface" / "responses" / "retro"
+        directory = self.project / ".docket" / "responses" / "retro"
         directory.mkdir(parents=True)
         (directory / "2026-08-16T04-46-56Z.json").write_text(
             json.dumps(TRANSCRIPT), encoding="utf-8"
         )
 
     def distill(self, *args) -> subprocess.CompletedProcess:
-        env = dict(os.environ, QSURFACE_PROJECT=str(self.project))
+        env = dict(os.environ, DOCKET_PROJECT=str(self.project))
         return subprocess.run(
-            [sys.executable, str(ROOT / "qsurface.py"), "interview", "distill", *args],
+            [sys.executable, str(ROOT / "docket.py"), "interview", "distill", *args],
             capture_output=True,
             text=True,
             env=env,
@@ -94,7 +94,7 @@ class DistillTestCase(unittest.TestCase):
     def spec_at(self, questionnaire_id: str) -> dict:
         path = (
             self.project
-            / ".question-surface"
+            / ".docket"
             / "questionnaires"
             / f"{questionnaire_id}.json"
         )
@@ -195,7 +195,7 @@ class TestDistillRefusals(DistillTestCase):
         self.assertFalse(Path("/tmp/escaped.json").exists())
 
     def test_a_questionnaire_response_is_not_an_interview(self):
-        directory = self.project / ".question-surface" / "responses" / "a-form"
+        directory = self.project / ".docket" / "responses" / "a-form"
         directory.mkdir(parents=True)
         (directory / "2026-08-16T00-00-00Z.json").write_text(
             json.dumps({"questionnaire_id": "a-form", "counts": {}, "answers": {}})

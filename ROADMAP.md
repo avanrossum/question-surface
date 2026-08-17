@@ -1,12 +1,14 @@
 # Roadmap
 
-Things deliberately not in the current release, with the reason. Decisions here came from the `ship-design` questionnaire and the `readme-shape` interview, both tracked under `.question-surface/responses/`, unless noted.
+Things deliberately not in the current release, with the reason. Decisions here came from the `ship-design` questionnaire and the `readme-shape` interview, both tracked under `.docket/responses/`, unless noted.
 
 ## Shipped since this file was written
 
+**The rename to Docket** (v2.0.0). Closes the open question recorded here on 2026-08-14 — "unless you know what it is, you don't really know what it is by the name alone." The condition set for revisiting was *if the tool is ever pitched somewhere the README is not*, and that arrived before the first external install, which is the only ordering in which the change is free. `question-surface` named the input widget at the moment agent harnesses began absorbing input widgets as built-ins; the committed decision record is the part worth naming. Reasoning in `~/Developer/The_CEO/consultations/question-surface/`.
+
 **Interview mode** (v1.3.0). One question at a time, each written after reading the last answer, conducted as an expert interviewer in a stated or inferred domain. It brought the persistent-server model with it, as predicted: `interview open` leaves a detached server, `ask` blocks for one answer, `close` finalises. The transcript is written after every answer, so an interrupted interview still leaves a record.
 
-**The interview → questionnaire handoff** (v1.4.0). `qsurface interview distill` scaffolds a questionnaire from a finished transcript, each exchange carried across as a marked draft, with `follows` pointing back at the interview. Raised in the `readme-shape` interview: *"the raw question surface is also important for clarifying — ESPECIALLY AFTER AN INTERVIEW."*
+**The interview → questionnaire handoff** (v1.4.0). `docket interview distill` scaffolds a questionnaire from a finished transcript, each exchange carried across as a marked draft, with `follows` pointing back at the interview. Raised in the `readme-shape` interview: *"the raw question surface is also important for clarifying — ESPECIALLY AFTER AN INTERVIEW."*
 
 Still open from those designs:
 
@@ -51,12 +53,6 @@ The client-side checks currently drive headless Chrome from `scripts/check_brows
 ### A plugin manifest for Claude Code
 
 `install.sh` covers Claude Code and every other runtime today. A plugin would lower install friction for Claude Code users specifically, at the cost of a second install path to keep working. Worth doing if other people start installing this.
-
-## Open questions
-
-### The name says little to someone who has not used it
-
-Raised when the name was confirmed: "unless you know what it is, you don't really know what it is by the name alone." The name was kept because it is accurate and the alternatives traded description for evocation. If the README's opening line is doing the work the name cannot, that is an acceptable split — but worth revisiting if the tool is ever pitched somewhere the README is not.
 
 ## Not planned
 

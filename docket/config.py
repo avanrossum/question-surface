@@ -31,7 +31,7 @@ VALID_KEYS = tuple(DEFAULTS)
 
 def config_dir() -> Path:
     base = os.environ.get("XDG_CONFIG_HOME") or (Path.home() / ".config")
-    return Path(base) / "question-surface"
+    return Path(base) / "docket"
 
 
 def config_path() -> Path:
@@ -75,12 +75,12 @@ def gate_sentence(gate: int | None = None) -> str:
     gate = load()["gate"] if gate is None else gate
     if not gate:
         return (
-            "Question Surface: no fixed question count triggers the surface — "
-            "use the `question-surface` skill's judgement guidance."
+            "Docket: no fixed question count triggers the surface — "
+            "use the `docket` skill's judgement guidance."
         )
     return (
-        f"Question Surface: {gate} or more questions for the user go through the "
-        f"`question-surface` skill, never a numbered list in chat. Fewer than {gate} "
+        f"Docket: {gate} or more questions for the user go through the "
+        f"`docket` skill, never a numbered list in chat. Fewer than {gate} "
         "also go through it when the answers would benefit from exposition, "
         "detailed answer choices, or open-ended interaction."
     )

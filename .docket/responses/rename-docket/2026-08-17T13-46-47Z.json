@@ -1,0 +1,169 @@
+{
+  "questionnaire_id": "rename-docket",
+  "title": "Renaming to Docket",
+  "respondent": "Alexander van Rossum",
+  "submitted_at": "2026-08-17T13:46:47Z",
+  "counts": {
+    "total": 12,
+    "answered": 11,
+    "unknown": 0,
+    "unanswered": 1,
+    "skipped": 0
+  },
+  "flagged_unknown": [],
+  "unanswered": [
+    "anything-else"
+  ],
+  "skipped": [],
+  "answers": {
+    "rename-scope": {
+      "prompt": "Which of these become Docket?",
+      "type": "multi",
+      "value": [
+        "repo",
+        "cli",
+        "package",
+        "state-dir",
+        "skill",
+        "config"
+      ],
+      "unknown": false,
+      "notes": "if you _do_ move the directory, you'll need to be careful, because it'll break our sessions.",
+      "labels": [
+        "The GitHub repo → `avanrossum/docket`",
+        "The command → `docket`",
+        "The Python package → `docket/`",
+        "The project directory → `.docket/`",
+        "The skill → `docket`",
+        "Config → `~/.config/docket/`"
+      ],
+      "recommended": [
+        "repo",
+        "cli",
+        "package",
+        "state-dir",
+        "skill",
+        "config"
+      ],
+      "followed_recommendation": true
+    },
+    "keep-alias": {
+      "prompt": "Should `qsurface` keep working as a command?",
+      "type": "single",
+      "value": "clean-break",
+      "unknown": false,
+      "labels": [
+        "No — clean break"
+      ],
+      "recommended": "clean-break",
+      "followed_recommendation": true
+    },
+    "state-dir-history": {
+      "prompt": "This repo's own `.question-surface/` holds the tracked decisions — ship-design, naming, readme-shape, build-retro. What happens to it?",
+      "type": "single",
+      "value": "move-keep-text",
+      "unknown": false,
+      "notes": "you'll need to somehow \"stay here\" in question-surface, while managing the repo in the other directory, at least until we finish the current version, then we'd need to move the meory and claude control files to the other dir for future sessions",
+      "labels": [
+        "`git mv` to `.docket/`, leave the words alone"
+      ],
+      "recommended": "move-keep-text",
+      "followed_recommendation": true
+    },
+    "local-path": {
+      "prompt": "Where should the working copy end up?",
+      "type": "single",
+      "value": "rename-in-place",
+      "unknown": false,
+      "notes": "the ceo directory was just for you to review the decisions that lead to Docket for confirmation.  The actual directory for this project would remain in ~/DEveloper.\n\nthe hyphen was a mistype - it should have been The_CEO/consultations",
+      "labels": [
+        "`~/Developer/docket`"
+      ],
+      "recommended": "new-parent-renamed",
+      "followed_recommendation": false
+    },
+    "parent-purpose": {
+      "prompt": "Is Docket becoming part of something larger, or is the folder just tidying?",
+      "type": "single",
+      "value": "just-filing",
+      "unknown": false,
+      "labels": [
+        "Just filing — Docket stays standalone"
+      ],
+      "recommended": "just-filing",
+      "followed_recommendation": true
+    },
+    "why-docket-section": {
+      "prompt": "The README has a \"Why is it called Question Surface?\" section — deadpan, ending with the command being fun to say and harder to justify. What happens to it?",
+      "type": "single",
+      "value": "rewrite-shorter",
+      "unknown": false,
+      "labels": [
+        "Rewrite it, shorter — the name now explains itself"
+      ],
+      "recommended": "rewrite-shorter",
+      "followed_recommendation": true
+    },
+    "origin-quote": {
+      "prompt": "Does the origin quote still open the README?",
+      "type": "single",
+      "value": "keep",
+      "unknown": false,
+      "labels": [
+        "Yes, unchanged"
+      ],
+      "recommended": "keep",
+      "followed_recommendation": true
+    },
+    "logo-direction": {
+      "prompt": "Which reading of \"docket\" should the mark be built on?",
+      "type": "single",
+      "value": "numbered-list",
+      "unknown": false,
+      "labels": [
+        "A docket as a numbered list of matters"
+      ],
+      "recommended": "numbered-list",
+      "followed_recommendation": true
+    },
+    "logo-register": {
+      "prompt": "How serious should it look?",
+      "type": "single",
+      "value": "editorial",
+      "unknown": false,
+      "labels": [
+        "Editorial — warm, considered, a good notebook"
+      ],
+      "recommended": "editorial",
+      "followed_recommendation": true
+    },
+    "branch-first": {
+      "prompt": "The `interview-handoff` branch is built and tested but not merged. Merge it before the rename, or rename first?",
+      "type": "single",
+      "value": "merge-first",
+      "unknown": false,
+      "labels": [
+        "Merge the handoff, then rename on top"
+      ],
+      "recommended": "merge-first",
+      "followed_recommendation": true
+    },
+    "version": {
+      "prompt": "What version is the rename?",
+      "type": "single",
+      "value": "major",
+      "unknown": false,
+      "labels": [
+        "2.0.0"
+      ],
+      "recommended": "major",
+      "followed_recommendation": true
+    },
+    "anything-else": {
+      "prompt": "Anything I have not asked?",
+      "type": "longtext",
+      "value": null,
+      "unknown": false
+    }
+  }
+}

@@ -67,7 +67,7 @@ def validate(spec: dict, source: str = "<spec>") -> dict:
     if version > SPEC_VERSION:
         raise SpecError(
             f"{source}: spec_version {version} is newer than this tool reads "
-            f"(understands up to {SPEC_VERSION}) — upgrade question-surface"
+            f"(understands up to {SPEC_VERSION}) — upgrade docket"
         )
 
     spec.setdefault("intro", "")

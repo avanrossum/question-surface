@@ -1,0 +1,195 @@
+{
+  "id": "rename-docket",
+  "title": "Renaming to Docket",
+  "intro": "The name is decided — this is about how far it reaches and where the repo lands.\n\nGood news on timing: **you have not installed it yet**, and nobody else has either. Every breaking change below is free today and expensive next week, so this is the moment to break whatever needs breaking.\n\nAnything you don't know yet, tick **Don't know** — it becomes a research item rather than a blank.",
+  "context_docs": [
+    "avanrossum/docket is free on GitHub",
+    "The old name appears in 33 files",
+    "~/Developer/The_CEO and ~/Developer/auto-ceo exist; The_CEO-consultations does not"
+  ],
+  "sections": [
+    {
+      "title": "What becomes Docket",
+      "intro": "The name appears in six distinct places, and they do not have to move together.",
+      "questions": [
+        {
+          "type": "info",
+          "prompt": "For reference, the six: the **GitHub repo** (`avanrossum/question-surface`), the **CLI command** (`qsurface`), the **Python package** (`qsurface/`), the **project state directory** (`.question-surface/` inside every project that uses it), the **skill** (`~/.claude/skills/question-surface/`), and the **config directory** (`~/.config/question-surface/`)."
+        },
+        {
+          "id": "rename-scope",
+          "type": "multi",
+          "prompt": "Which of these become Docket?",
+          "why": "A half-rename is the worst outcome — a repo called Docket whose command is `qsurface` and whose directories say question-surface is more confusing than either name alone. I recommend all six, but the state directory is the one with a real cost, so it is worth deciding deliberately rather than by default.",
+          "required": true,
+          "recommend": ["repo", "cli", "package", "state-dir", "skill", "config"],
+          "options": [
+            { "value": "repo", "label": "The GitHub repo → `avanrossum/docket`", "detail": "GitHub redirects the old URL indefinitely, so nothing breaks. The name is free." },
+            { "value": "cli", "label": "The command → `docket`", "detail": "`docket serve`, `docket interview open`. Reads better than `qsurface` ever did, and you said `qsurface` was fun to say but hard to justify." },
+            { "value": "package", "label": "The Python package → `docket/`", "detail": "Internal only. Costs nothing but a large diff." },
+            { "value": "state-dir", "label": "The project directory → `.docket/`", "detail": "This is the one that appears in *other people's* repositories. Changing it later means every project using the tool has a stale directory. Changing it now costs one `git mv` in this repo." },
+            { "value": "skill", "label": "The skill → `docket`", "detail": "Its name is what an agent matches on, so it should say Docket." },
+            { "value": "config", "label": "Config → `~/.config/docket/`", "detail": "Yours is currently the only one, and it holds two settings." }
+          ]
+        },
+        {
+          "id": "keep-alias",
+          "type": "single",
+          "prompt": "Should `qsurface` keep working as a command?",
+          "why": "You have typed it a few hundred times today, which is exactly how muscle memory forms. Against that: nothing is installed yet, so there is no existing install to be kind to, and an alias is a second name to explain forever.",
+          "recommend": "clean-break",
+          "show_if": { "question": "rename-scope", "includes": "cli" },
+          "options": [
+            { "value": "clean-break", "label": "No — clean break", "detail": "One name. Nothing to document twice. You have not installed the old one, so nothing breaks." },
+            { "value": "alias", "label": "Yes — install both", "detail": "`qsurface` symlinks to `docket`. Costs a line in the installer and a footnote in the docs, forever." },
+            { "value": "alias-temporary", "label": "Alias now, drop it at 3.0", "detail": "Kindness with an expiry date. Cost: someone has to remember to remove it." }
+          ]
+        },
+        {
+          "id": "state-dir-history",
+          "type": "single",
+          "prompt": "This repo's own `.question-surface/` holds the tracked decisions — ship-design, naming, readme-shape, build-retro. What happens to it?",
+          "why": "Those files are the record of why the tool is the way it is, and the README points at them. Moving them is easy; deciding whether to rewrite what they *say* is the actual question, since they discuss a tool called Question Surface.",
+          "recommend": "move-keep-text",
+          "show_if": { "question": "rename-scope", "includes": "state-dir" },
+          "options": [
+            { "value": "move-keep-text", "label": "`git mv` to `.docket/`, leave the words alone", "detail": "The directory moves; the transcripts still say Question Surface because that is what was said at the time. A record that gets edited to match the present is not a record." },
+            { "value": "move-and-rewrite", "label": "Move and rewrite the text to say Docket", "detail": "Everything reads consistently. Cost: it makes a conversation from last week appear to have used a name that did not exist yet." },
+            { "value": "leave-in-place", "label": "Leave the old directory as an archive, start `.docket/` fresh", "detail": "Nothing is touched. Cost: two state directories in the repo, and the tool only reads one." }
+          ]
+        }
+      ]
+    },
+    {
+      "title": "Where the repo lives",
+      "questions": [
+        {
+          "type": "info",
+          "prompt": "You wrote `~/Developer/The_CEO-consultations/question-surface`. That directory does not exist — you have `~/Developer/The_CEO` and `~/Developer/auto-ceo`. I would rather ask than create a folder structure you did not mean."
+        },
+        {
+          "id": "local-path",
+          "type": "single",
+          "prompt": "Where should the working copy end up?",
+          "why": "This decides whether I create a new parent directory, and whether the repo folder itself gets renamed. Moving a git clone is safe — the remote and history travel with it — but I am not creating directory structure on a guess.",
+          "required": true,
+          "recommend": "new-parent-renamed",
+          "options": [
+            { "value": "new-parent-renamed", "label": "`~/Developer/The_CEO-consultations/docket`", "detail": "Create the parent, move the repo, rename the folder to match the tool." },
+            { "value": "new-parent-old-name", "label": "`~/Developer/The_CEO-consultations/question-surface`", "detail": "Exactly what you typed. Cost: a folder named question-surface containing a tool called Docket." },
+            { "value": "rename-in-place", "label": "`~/Developer/docket`", "detail": "No new parent. Simplest, if The_CEO-consultations was a slip." },
+            { "value": "under-the-ceo", "label": "`~/Developer/The_CEO/consultations/docket`", "detail": "Under the existing The_CEO project rather than a new sibling." }
+          ]
+        },
+        {
+          "id": "parent-purpose",
+          "type": "single",
+          "prompt": "Is Docket becoming part of something larger, or is the folder just tidying?",
+          "why": "If Docket is one of several consultation tools, that changes what the README says about it and whether the repo stays standalone. If it is filing, it changes nothing.",
+          "recommend": "just-filing",
+          "options": [
+            { "value": "just-filing", "label": "Just filing — Docket stays standalone", "detail": "Nothing changes but the path." },
+            { "value": "family", "label": "One of a family of consultation tools", "detail": "Worth saying so in the README, and worth thinking about shared conventions before there are three of them." },
+            { "value": "undecided", "label": "Not sure yet", "detail": "Fine — I will treat it as filing until you say otherwise." }
+          ]
+        }
+      ]
+    },
+    {
+      "title": "The name in the product",
+      "questions": [
+        {
+          "id": "why-docket-section",
+          "type": "single",
+          "prompt": "The README has a \"Why is it called Question Surface?\" section — deadpan, ending with the command being fun to say and harder to justify. What happens to it?",
+          "why": "Docket does not need the apology that Question Surface did, because a docket is literally a list of matters awaiting decision. The joke has lost its target, which is either a reason to cut it or a reason to write a better one.",
+          "recommend": "rewrite-shorter",
+          "options": [
+            { "value": "rewrite-shorter", "label": "Rewrite it, shorter — the name now explains itself", "detail": "Two lines saying what a docket is and why it fits, keeping the dry register." },
+            { "value": "keep-joke", "label": "Keep the same shape with a new joke", "detail": "It earned its place once. Cost: self-deprecation about a name that no longer deserves it reads as false modesty." },
+            { "value": "cut-it", "label": "Cut the section entirely", "detail": "The name works; explaining it is throat-clearing." }
+          ]
+        },
+        {
+          "id": "origin-quote",
+          "type": "single",
+          "prompt": "Does the origin quote still open the README?",
+          "why": "It is about wanting questions on one page, not about the name, so it survives a rename untouched. Confirming rather than assuming, since it is the first thing anyone reads.",
+          "recommend": "keep",
+          "options": [
+            { "value": "keep", "label": "Yes, unchanged", "detail": "It names the frustration, which is what the sign in the woods is for." },
+            { "value": "revisit", "label": "Revisit it while we are here", "detail": "Tell me what you would change." }
+          ]
+        }
+      ]
+    },
+    {
+      "title": "The logo",
+      "intro": "You said Docket should be easier to design around. I will write the brief for Claude Design; this decides what it points at.",
+      "questions": [
+        {
+          "id": "logo-direction",
+          "type": "single",
+          "prompt": "Which reading of \"docket\" should the mark be built on?",
+          "why": "A logo brief that offers four metaphors gets a compromise. One clear direction gets something with a point of view, and the alternatives are still there if the first pass misses.",
+          "recommend": "numbered-list",
+          "options": [
+            { "value": "numbered-list", "label": "A docket as a numbered list of matters", "detail": "Short ruled lines with markers beside them — reads instantly at 16px, and it is what the tool literally shows you. Closest to the existing margin-mark animation, so the product and the mark would rhyme." },
+            { "value": "stamped-card", "label": "A docket as a stamped card or label", "detail": "The physical object: a tag on a file, something marked and filed. Evokes the durable record rather than the questions." },
+            { "value": "folder-tab", "label": "A folder tab", "detail": "Filing and organisation. Risk: generic — every document app has been here." },
+            { "value": "ledger-column", "label": "A ledger column with a rule", "detail": "Formal and archival, and it echoes the margin rule the waiting animation already uses." }
+          ]
+        },
+        {
+          "id": "logo-register",
+          "type": "single",
+          "prompt": "How serious should it look?",
+          "why": "The palette is warm antique gold on off-white, which can read as either editorial or legal depending on the mark. Both are defensible; they are different products.",
+          "recommend": "editorial",
+          "options": [
+            { "value": "editorial", "label": "Editorial — warm, considered, a good notebook", "detail": "Matches the current UI exactly." },
+            { "value": "legal", "label": "Legal — formal, archival, a court record", "detail": "Leans into the word's origin. Cost: risks looking like enterprise compliance software." },
+            { "value": "utility", "label": "Utility — plain developer-tool mark", "detail": "Geometric and neutral. Safest, least memorable." }
+          ]
+        }
+      ]
+    },
+    {
+      "title": "Sequencing",
+      "questions": [
+        {
+          "id": "branch-first",
+          "type": "single",
+          "prompt": "The `interview-handoff` branch is built and tested but not merged. Merge it before the rename, or rename first?",
+          "why": "A rename touching 33 files and an unmerged feature branch will conflict on almost every file if they cross. The order costs nothing to get right and is painful to get wrong.",
+          "required": true,
+          "recommend": "merge-first",
+          "options": [
+            { "value": "merge-first", "label": "Merge the handoff, then rename on top", "detail": "One clean rename commit against a settled main. CI validates the handoff before anything else moves." },
+            { "value": "rename-first", "label": "Rename first, then rebase the branch", "detail": "Cost: rebasing a 700-line branch across a 33-file rename, by hand, for no benefit I can see." },
+            { "value": "test-handoff-first", "label": "Hold both until I have tested the handoff myself", "detail": "You said you would test shortly. Nothing moves until you have." }
+          ]
+        },
+        {
+          "id": "version",
+          "type": "single",
+          "prompt": "What version is the rename?",
+          "why": "Renaming the state directory changes where every project keeps its files, which is the definition of a breaking change even though nobody is affected yet.",
+          "recommend": "major",
+          "options": [
+            { "value": "major", "label": "2.0.0", "detail": "Honest. The tool's name, command, and storage location all change." },
+            { "value": "minor", "label": "1.6.0", "detail": "Nobody is affected, so nothing actually breaks. Cost: a changelog that undersells the biggest change in the project." }
+          ]
+        },
+        {
+          "id": "anything-else",
+          "type": "longtext",
+          "prompt": "Anything I have not asked?",
+          "why": "A rename is the moment other regrets surface. If something else has been bothering you about the shape of this, now is the cheap time.",
+          "placeholder": "Free text — or leave blank",
+          "allow_unknown": false
+        }
+      ]
+    }
+  ]
+}

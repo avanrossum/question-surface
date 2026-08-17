@@ -1,18 +1,18 @@
 #!/usr/bin/env python3
-"""Question Surface — collect answers to a large question set in one pass.
+"""Docket — collect answers to a large question set in one pass.
 
-    qsurface serve example           # open the form, wait for submit
-    qsurface validate example        # check a spec without serving
-    qsurface render example -o /tmp/preview.html
-    qsurface list                    # questionnaires + response counts
-    qsurface show example            # summarize the latest response
-    qsurface new my-questionnaire    # scaffold a new questionnaire
-    qsurface doctor                  # check the install is wired up
+    docket serve example           # open the form, wait for submit
+    docket validate example        # check a spec without serving
+    docket render example -o /tmp/preview.html
+    docket list                    # questionnaires + response counts
+    docket show example            # summarize the latest response
+    docket new my-questionnaire    # scaffold a new questionnaire
+    docket doctor                  # check the install is wired up
 
 A questionnaire is referenced by its id or by an explicit path to a JSON file.
-Ids resolve against the current project's `.question-surface/questionnaires/`
+Ids resolve against the current project's `.docket/questionnaires/`
 first, then the questionnaires bundled with the tool. Responses are always
-written into the project. See `qsurface/paths.py`.
+written into the project. See `docket/paths.py`.
 """
 
 from __future__ import annotations
@@ -32,15 +32,15 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parent
 sys.path.insert(0, str(ROOT))
 
-from qsurface import __version__  # noqa: E402
-from qsurface import browser  # noqa: E402
-from qsurface import config as config_mod  # noqa: E402
-from qsurface import interview  # noqa: E402
-from qsurface import paths  # noqa: E402
-from qsurface import render as render_mod  # noqa: E402
-from qsurface import server as server_mod  # noqa: E402
-from qsurface import spec as spec_mod  # noqa: E402
-from qsurface import store  # noqa: E402
+from docket import __version__  # noqa: E402
+from docket import browser  # noqa: E402
+from docket import config as config_mod  # noqa: E402
+from docket import interview  # noqa: E402
+from docket import paths  # noqa: E402
+from docket import render as render_mod  # noqa: E402
+from docket import server as server_mod  # noqa: E402
+from docket import spec as spec_mod  # noqa: E402
+from docket import store  # noqa: E402
 
 
 def find_spec(reference: str) -> Path | None:
@@ -67,7 +67,7 @@ def resolve(reference: str) -> Path:
     raise SystemExit(
         f"error: no questionnaire {reference!r}\n"
         f"       looked in:\n{looked}\n"
-        f"       run `qsurface list` to see what exists"
+        f"       run `docket list` to see what exists"
     )
 
 
@@ -201,7 +201,7 @@ def cmd_list(args) -> int:
         print()
 
     if not found:
-        print("no questionnaires yet — scaffold one with `qsurface new <id>`")
+        print("no questionnaires yet — scaffold one with `docket new <id>`")
         print(f"they will be written to {paths.questionnaires_dir()}")
     return 0
 
@@ -376,7 +376,7 @@ def cmd_doctor(args) -> int:
         if detail:
             print(f"          {detail}")
 
-    print(f"question-surface {__version__}")
+    print(f"docket {__version__}")
     print(f"  installed at {ROOT}")
     print()
 
@@ -387,14 +387,14 @@ def cmd_doctor(args) -> int:
         "" if (major, minor) >= (3, 9) else "needs 3.9 or newer",
     )
 
-    on_path = shutil.which("qsurface")
+    on_path = shutil.which("docket")
     check(
         bool(on_path),
-        "qsurface on PATH",
+        "docket on PATH",
         on_path or "run ./install.sh, or add this directory to PATH",
     )
 
-    skill = Path.home() / ".claude" / "skills" / "question-surface"
+    skill = Path.home() / ".claude" / "skills" / "docket"
     linked = skill.exists()
     target = ""
     if skill.is_symlink():
@@ -414,7 +414,7 @@ def cmd_doctor(args) -> int:
     pointer = False
     if claude_md.exists():
         try:
-            pointer = "Question Surface:" in claude_md.read_text(encoding="utf-8")
+            pointer = "Docket:" in claude_md.read_text(encoding="utf-8")
         except OSError:
             pointer = False
     check(
@@ -440,7 +440,7 @@ def cmd_doctor(args) -> int:
             ""
             if not stale
             else "clear with: "
-            + ", ".join(f"qsurface interview close {s['id']}" for s in stale),
+            + ", ".join(f"docket interview close {s['id']}" for s in stale),
         )
 
     print()
@@ -471,7 +471,7 @@ def cmd_interview_open(args) -> int:
     log_path = interview.sessions_dir() / f"{args.interview}.log"
     with open(log_path, "ab") as log:
         child = subprocess.Popen(
-            [sys.executable, str(ROOT / "qsurface.py"), "interview", "_serve",
+            [sys.executable, str(ROOT / "docket.py"), "interview", "_serve",
              args.interview],
             stdout=log,
             stderr=log,
@@ -500,7 +500,7 @@ def cmd_interview_open(args) -> int:
     print(f"  Interview open → {url}")
     print(f"  {record['title']}")
     print("  Ask the first question with:")
-    print(f"    qsurface interview ask {args.interview} --prompt \"...\"")
+    print(f"    docket interview ask {args.interview} --prompt \"...\"")
     return 0
 
 
@@ -567,8 +567,8 @@ def cmd_interview_hold(args) -> int:
         return 1
     interview.control(session, "/control/hold", {}, timeout=20)
     print("  Holding. The page says the questions are over and you are reading back.")
-    print(f"    then: qsurface interview offer {args.interview} --questionnaire <id>")
-    print(f"      or: qsurface interview close {args.interview}")
+    print(f"    then: docket interview offer {args.interview} --questionnaire <id>")
+    print(f"      or: docket interview close {args.interview}")
     return 0
 
 
@@ -753,7 +753,7 @@ def cmd_interview_distill(args) -> int:
     print(f"distilled {len(exchanges)} exchange(s) -> {path}")
     print(f"  every question is a TODO draft; edit them before serving")
     print(f"  serving it shows the interview above the questions (follows: {args.interview})")
-    print(f"  next: qsurface validate {questionnaire_id}")
+    print(f"  next: docket validate {questionnaire_id}")
     return 0
 
 
@@ -782,10 +782,10 @@ def cmd_archive(args) -> int:
 
 def main(argv: list[str] | None = None) -> int:
     parser = argparse.ArgumentParser(
-        prog="qsurface", description="Batch question collection."
+        prog="docket", description="Batch question collection."
     )
     parser.add_argument(
-        "--version", action="version", version=f"question-surface {__version__}"
+        "--version", action="version", version=f"docket {__version__}"
     )
     sub = parser.add_subparsers(dest="command", required=True)
 

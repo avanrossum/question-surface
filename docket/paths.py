@@ -9,12 +9,12 @@ them if the clone were ever deleted.
 
 There are two sources for a questionnaire and only one for a response:
 
-- **Project questionnaires** — `<project>/.question-surface/questionnaires/`.
+- **Project questionnaires** — `<project>/.docket/questionnaires/`.
   Authored for that project. This is where `new` writes.
 - **Bundled questionnaires** — the tool's own `questionnaires/`, shipped with
   the install. This is how `example` stays available everywhere without being
   copied into projects that only want to read it.
-- **Responses** — always `<project>/.question-surface/responses/`. A response
+- **Responses** — always `<project>/.docket/responses/`. A response
   is a record about the project, so it is never written into the tool's
   directory, including when the questionnaire came from the bundle.
 """
@@ -25,7 +25,7 @@ import os
 from pathlib import Path
 
 # The single point of change if this directory is ever renamed.
-STATE_DIR_NAME = ".question-surface"
+STATE_DIR_NAME = ".docket"
 
 TOOL_ROOT = Path(__file__).resolve().parent.parent
 BUNDLED_QUESTIONNAIRES = TOOL_ROOT / "questionnaires"
@@ -42,7 +42,7 @@ def project_root(start: Path | None = None) -> Path:
     back to the working directory when there is no repository, which keeps the
     tool usable in a scratch directory.
     """
-    if override := os.environ.get("QSURFACE_PROJECT"):
+    if override := os.environ.get("DOCKET_PROJECT"):
         return Path(override).expanduser().resolve()
     current = (start or Path.cwd()).resolve()
     for candidate in (current, *current.parents):

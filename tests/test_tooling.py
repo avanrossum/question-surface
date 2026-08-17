@@ -16,9 +16,9 @@ from unittest import mock
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 
-from qsurface import config, paths, render, spec as spec_mod, store  # noqa: E402
+from docket import config, paths, render, spec as spec_mod, store  # noqa: E402
 
-from test_qsurface import minimal  # noqa: E402
+from test_docket import minimal  # noqa: E402
 
 
 class TestProjectPaths(unittest.TestCase):
@@ -28,10 +28,10 @@ class TestProjectPaths(unittest.TestCase):
         self.tmp = tempfile.TemporaryDirectory()
         self.root = Path(self.tmp.name).resolve()
         self.addCleanup(self.tmp.cleanup)
-        # QSURFACE_PROJECT would short-circuit the discovery being tested.
+        # DOCKET_PROJECT would short-circuit the discovery being tested.
         patcher = mock.patch.dict(os.environ, {}, clear=False)
         patcher.start()
-        os.environ.pop("QSURFACE_PROJECT", None)
+        os.environ.pop("DOCKET_PROJECT", None)
         self.addCleanup(patcher.stop)
 
     def test_repository_root_is_found_from_a_subdirectory(self):
@@ -51,15 +51,15 @@ class TestProjectPaths(unittest.TestCase):
         nested.mkdir(parents=True)
         # Running from a subdirectory must not create a second state directory.
         self.assertEqual(
-            paths.responses_dir(nested), self.root / ".question-surface" / "responses"
+            paths.responses_dir(nested), self.root / ".docket" / "responses"
         )
         self.assertEqual(
             paths.questionnaires_dir(nested),
-            self.root / ".question-surface" / "questionnaires",
+            self.root / ".docket" / "questionnaires",
         )
 
     def test_environment_override_wins(self):
-        with mock.patch.dict(os.environ, {"QSURFACE_PROJECT": str(self.root)}):
+        with mock.patch.dict(os.environ, {"DOCKET_PROJECT": str(self.root)}):
             self.assertEqual(paths.project_root(Path("/")), self.root)
 
     def test_search_path_puts_the_project_before_the_bundle(self):

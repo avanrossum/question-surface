@@ -119,7 +119,7 @@ def serve(
     thread = threading.Thread(target=httpd.serve_forever, daemon=True)
     thread.start()
 
-    print(f"  Question Surface → {url}")
+    print(f"  Docket → {url}")
     print(f"  {spec['title']}")
     if httpd.server_port != port:
         print(f"  (port {port} was busy — using {httpd.server_port})")

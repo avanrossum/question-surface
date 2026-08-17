@@ -1,4 +1,4 @@
-"""Tests for the Question Surface spec, store and renderer.
+"""Tests for the Docket spec, store and renderer.
 
 Run: python3 -m unittest discover -s tests -t .
 """
@@ -14,7 +14,7 @@ from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 
-from qsurface import render, spec as spec_mod, store  # noqa: E402
+from docket import render, spec as spec_mod, store  # noqa: E402
 
 
 def minimal(**overrides) -> dict:

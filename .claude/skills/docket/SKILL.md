@@ -1,13 +1,13 @@
 ---
-name: question-surface
-description: Collect answers from the user through a local web surface instead of asking serially in chat. Two modes. Batch form — whenever a task needs decisions, requirements, or clarifications: architecture forks, scoping, discovery, requirements gathering, keep-vs-drop inventories, or any point where you are about to write a numbered list of questions into a chat message; also for fewer questions when the answers would benefit from real exposition, detailed answer choices, or open-ended interaction; mandatory at the configured gate, default five. Interview mode — whenever the user asks to be interviewed, or when each answer should determine the next question: drawing out material for writing, working through an architecture or systems-design problem, or thinking through a complex problem out loud. Covers authoring, serving, conducting, and consuming the answers.
+name: docket
+description: Docket collects your coding agent's open questions into one page you clear in a sitting, and keeps the answers as a record you can commit next to the code they decided. Collect answers from the user through a local web surface instead of asking serially in chat. Two modes. Batch form — whenever a task needs decisions, requirements, or clarifications: architecture forks, scoping, discovery, requirements gathering, keep-vs-drop inventories, or any point where you are about to write a numbered list of questions into a chat message; also for fewer questions when the answers would benefit from real exposition, detailed answer choices, or open-ended interaction; mandatory at the configured gate, default five. Interview mode — whenever the user asks to be interviewed, or when each answer should determine the next question: drawing out material for writing, working through an architecture or systems-design problem, or thinking through a complex problem out loud. Covers authoring, serving, conducting, and consuming the answers.
 ---
 
-# Question Surface — batch question collection
+# Docket — batch question collection
 
 **Two triggers, either one is sufficient:**
 
-1. **Count.** The gate is five or more questions by default. It is a per-user setting — if the user's global `CLAUDE.md` states a different number, that number wins. `qsurface config gate` reports the current value.
+1. **Count.** The gate is five or more questions by default. It is a per-user setting — if the user's global `CLAUDE.md` states a different number, that number wins. `docket config gate` reports the current value.
 2. **Shape.** Any number of questions whose answers would benefit from exposition, detailed answer choices, or open-ended interaction. Two genuinely hard forks with real tradeoffs belong here even though two is below the gate. A form where each option carries its consequence gets a better answer than the same question flattened into a chat paragraph.
 
 Four easy questions stay in chat. Two hard ones do not.
@@ -24,17 +24,17 @@ A single blocking question. A quick yes/no. Anything where you should make the r
 
 ## Workflow
 
-1. **Draft the spec.** `qsurface new <id> --title "..."` writes to `.question-surface/questionnaires/` in the current project. Group questions into sections by decision area. Order matters: a `show_if` may only reference an earlier question.
+1. **Draft the spec.** `docket new <id> --title "..."` writes to `.docket/questionnaires/` in the current project. Group questions into sections by decision area. Order matters: a `show_if` may only reference an earlier question.
 
 2. **Fill in `why` on every question.** This is the part that makes the difference. State what the answer unblocks and what breaks if it goes the other way. A question without a `why` gets a worse answer.
 
 3. **Recommend where you have a view.** Set `recommend` to the option you would pick, and put the tradeoff in each option's `detail`. The user is a decision-maker, not a requirements oracle — a recommendation to react to is faster than a blank fork, and the response records whether it was followed. Do not recommend when you genuinely have no basis; a fake recommendation is worse than none.
 
-4. **Validate.** `qsurface validate <id>` — catches duplicate ids, forward-referencing conditionals, and recommendations naming options that don't exist.
+4. **Validate.** `docket validate <id>` — catches duplicate ids, forward-referencing conditionals, and recommendations naming options that don't exist.
 
-5. **Serve it in the background and say so plainly.** `qsurface serve <id>` blocks until submission, so run it as a background command and tell the user the URL. Then **keep working on whatever is not blocked by the answers** — that is the point of not blocking the session. Say which parts you are proceeding with and which are waiting.
+5. **Serve it in the background and say so plainly.** `docket serve <id>` blocks until submission, so run it as a background command and tell the user the URL. Then **keep working on whatever is not blocked by the answers** — that is the point of not blocking the session. Say which parts you are proceeding with and which are waiting.
 
-6. **Read the answers back.** `qsurface show <id>` for the summary and paths; read the JSON for the detail. The response document records, per question, the value, whether it was flagged unknown, free-text notes, and whether your recommendation was followed.
+6. **Read the answers back.** `docket show <id>` for the summary and paths; read the JSON for the detail. The response document records, per question, the value, whether it was flagged unknown, free-text notes, and whether your recommendation was followed.
 
 7. **Act on `flagged_unknown` separately.** Those are not decisions the user declined to make — they are research items the questionnaire generated. Do the research, or turn them into tracked work; do not simply re-ask them. If a flagged item needs a decision after you have researched it, that is a follow-up questionnaire, not a chat message.
 
@@ -70,10 +70,10 @@ What separates an interview from a form asked slowly:
 ### Workflow
 
 ```bash
-qsurface interview open <id> --title "..." --domain "systems design"
-qsurface interview ask <id> --prompt "..." --why "..."     # blocks, prints the answer as JSON
-qsurface interview ask <id> --prompt "..."                 # ...informed by the last answer
-qsurface interview close <id> --summary "..."              # writes the transcript
+docket interview open <id> --title "..." --domain "systems design"
+docket interview ask <id> --prompt "..." --why "..."     # blocks, prints the answer as JSON
+docket interview ask <id> --prompt "..."                 # ...informed by the last answer
+docket interview close <id> --summary "..."              # writes the transcript
 ```
 
 `open` returns immediately, leaving a detached server. Each `ask` blocks until the answer comes back and prints it as JSON — `--text` prints just the answer text. `--option` adds suggested answers as chips the respondent can click to build on; repeat it for several.
@@ -83,22 +83,22 @@ qsurface interview close <id> --summary "..."              # writes the transcri
 An interview reliably ends with a few things that have stopped being discussion and become decisions. Hand off rather than stopping:
 
 ```bash
-qsurface interview hold <id>                     # page says the questions are over
-qsurface interview distill <id> --only 2,4       # scaffold from the exchanges that matter
+docket interview hold <id>                     # page says the questions are over
+docket interview distill <id> --only 2,4       # scaffold from the exchanges that matter
 # rewrite the TODO drafts into real questions with real options and costs
-qsurface validate <id>-decisions
-qsurface interview offer <id> --questionnaire <id>-decisions --message "..."
+docket validate <id>-decisions
+docket interview offer <id> --questionnaire <id>-decisions --message "..."
 ```
 
 `offer` blocks and prints whether it was taken, with the response paths. Taking it opens the form in the tab the interview is already in.
 
 **Only offer when there is something to decide.** A form generated because the workflow allows one is exactly the manufactured-questions failure the gate exists to prevent. If the interview produced observations rather than forks, `close` and say what you learned.
 
-**Always `close`.** The transcript is written after every answer, so nothing is lost if you don't, but an unclosed session leaves a server running until it goes idle. `qsurface interview list` shows what is open.
+**Always `close`.** The transcript is written after every answer, so nothing is lost if you don't, but an unclosed session leaves a server running until it goes idle. `docket interview list` shows what is open.
 
 If `ask` exits non-zero, the user hasn't answered within the timeout or the session was closed. That means "still waiting", not "declined" — the answer box keeps their draft.
 
-Read the finished transcript with `qsurface show <id>`, or read the JSON directly for the exchange list.
+Read the finished transcript with `docket show <id>`, or read the JSON directly for the exchange list.
 
 ## Follow-up rounds
 
@@ -107,23 +107,23 @@ Set `"follows": "<earlier-questionnaire-id>"` in the spec and the form renders a
 ## Commands
 
 ```bash
-qsurface list                      # questionnaires and response counts
-qsurface new <id> --title "..."    # scaffold
-qsurface validate <id>             # check a spec without serving it
-qsurface serve <id>                # serve, block until submitted
-qsurface serve <id> --timeout 30   # give up after 30 minutes; 0 waits forever
-qsurface show <id>                 # summary and paths
-qsurface show <id> --path-only     # just the latest JSON path
-qsurface archive <id>              # retire a questionnaire, keep its responses
-qsurface config gate 3             # change the gate for this user
-qsurface doctor                    # check the install
+docket list                      # questionnaires and response counts
+docket new <id> --title "..."    # scaffold
+docket validate <id>             # check a spec without serving it
+docket serve <id>                # serve, block until submitted
+docket serve <id> --timeout 30   # give up after 30 minutes; 0 waits forever
+docket show <id>                 # summary and paths
+docket show <id> --path-only     # just the latest JSON path
+docket archive <id>              # retire a questionnaire, keep its responses
+docket config gate 3             # change the gate for this user
+docket doctor                    # check the install
 ```
 
 `serve` exits non-zero if it times out with no submission. The draft is saved either way, so re-serving resumes where the user stopped — treat a timeout as "still waiting", not as "declined to answer".
 
 ## Where things land
 
-Questionnaires and responses live in the project being worked on, under `.question-surface/`. Responses are records of decisions and are meant to be committed with the work they gate — the tool never stages them itself, so commit them as part of the task. The `example` questionnaire ships with the tool and is available from any project as the format reference.
+Questionnaires and responses live in the project being worked on, under `.docket/`. Responses are records of decisions and are meant to be committed with the work they gate — the tool never stages them itself, so commit them as part of the task. The `example` questionnaire ships with the tool and is available from any project as the format reference.
 
 ## Enforcement
 

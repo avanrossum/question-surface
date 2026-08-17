@@ -7,7 +7,7 @@
   "use strict";
 
   var CFG = window.__IV__ || {};
-  var DRAFT_KEY = "qsurface:iv:" + CFG.id;
+  var DRAFT_KEY = "docket:iv:" + CFG.id;
   var after = CFG.answered || 0;
   var current = null;
   var selected = [];
@@ -405,7 +405,7 @@
     var box = document.getElementById("ivDictate");
     if (!box) return;
     try {
-      if (localStorage.getItem("qsurface:dictate-dismissed") === "1") return;
+      if (localStorage.getItem("docket:dictate-dismissed") === "1") return;
     } catch (err) { /* private browsing */ }
 
     var platform = (navigator.platform || navigator.userAgent || "").toLowerCase();
@@ -421,7 +421,7 @@
     box.hidden = false;
     box.querySelector("button").addEventListener("click", function () {
       box.hidden = true;
-      try { localStorage.setItem("qsurface:dictate-dismissed", "1"); } catch (err) {}
+      try { localStorage.setItem("docket:dictate-dismissed", "1"); } catch (err) {}
     });
   }
 

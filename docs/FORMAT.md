@@ -3,7 +3,7 @@
 The complete reference. `questionnaires/example.json` ships with the tool, exercises every feature, and is the fastest way to see all of this at once:
 
 ```bash
-qsurface render example -o /tmp/preview.html
+docket render example -o /tmp/preview.html
 ```
 
 ---
@@ -135,7 +135,7 @@ Conditionals are evaluated identically in the browser and on the server. A quest
 - `reordered` appears on `rank` answers. `false` means the respondent accepted the order as presented rather than arranging it — a weaker signal, but an answer.
 - A `skipped` entry carries no value, notes, labels, or recommendation verdict. It was never asked.
 
-Read it with `qsurface show <id>`, or `qsurface show <id> --path-only` for just the JSON path.
+Read it with `docket show <id>`, or `docket show <id> --path-only` for just the JSON path.
 
 ---
 
