@@ -4,6 +4,23 @@ Semver. Newest first. The tool carries its own version because questionnaires au
 
 ---
 
+## 1.5.0 — 2026-08-16
+
+### Added
+
+- **The interview hands off to a form in the same tab.** `qsurface interview hold` tells the page the questions are over while the agent reads the conversation back, and `qsurface interview offer --questionnaire <id>` presents a follow-up by name and count with two buttons. Taking it loads the form into the tab the interview is already in; declining shows the usual close-this-tab message. `offer` blocks until the respondent decides and prints the outcome with the response paths.
+- **The transcript records the handoff** in a `followup` block — offered, taken, and where the answers went — so an interview and the response beside it are not two unrelated files.
+- **A wrap-up waiting state**: "That's the last question — hold on a moment." The page previously still said it was reading an answer once there were no more questions to ask.
+
+### Fixed
+
+- **`write_transcript` dropped fields it was not told about.** It builds its document from a fixed key list, so `followup` was set on the record and silently never written. Caught by checking the artifact rather than the return value.
+
+### Notes
+
+- The offer is an offer. A questionnaire nobody agreed to is the manufactured-questions failure the gate exists to prevent, so the skill says to hand off only when the interview produced forks rather than observations.
+- Test helper threads now surface what they raise. A missing import in a respondent thread killed it silently and presented in the main thread as an unexplained timeout, which is a slow way to find a typo. 117 Python tests, 49 client-side checks.
+
 ## 1.4.2 — 2026-08-16
 
 ### Fixed

@@ -324,6 +324,21 @@ def interview_page(record: dict) -> str:
     </div>
   </div>
 
+  <div class="iv-state" id="stateOffer">
+    <div class="iv-card iv-offer">
+      <div class="iv-offer-kicker">Interview complete</div>
+      <h2 id="ivOfferTitle"></h2>
+      <p class="iv-offer-body" id="ivOfferBody"></p>
+      <div class="iv-offer-actions">
+        <button type="button" class="btn btn-ghost" id="ivOfferSkip">No thanks</button>
+        <button type="button" class="btn btn-primary" id="ivOfferTake">
+          Answer them — <span id="ivOfferCount"></span>
+        </button>
+      </div>
+      <p class="iv-offer-note">The transcript is already saved either way.</p>
+    </div>
+  </div>
+
   <div class="iv-state" id="stateDone">
     <div class="iv-card iv-done">
       <h2>Interview complete</h2>

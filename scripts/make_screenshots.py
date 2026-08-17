@@ -274,6 +274,16 @@ IV_PROCESSING = """
 document.getElementById("stateProcessing").classList.add("is-active");
 """
 
+IV_OFFER = """
+document.getElementById("stateProcessing").classList.remove("is-active");
+document.getElementById("stateOffer").classList.add("is-active");
+document.getElementById("ivOfferTitle").textContent = "Session storage — decisions";
+document.getElementById("ivOfferBody").textContent =
+  "Three things from that are now precise enough to decide rather than discuss. " +
+  "I have them ready as a form if you want them.";
+document.getElementById("ivOfferCount").textContent = "3 questions";
+"""
+
 
 def interview_shots(chrome: str) -> None:
     from qsurface import interview  # noqa: PLC0415
@@ -298,6 +308,13 @@ def interview_shots(chrome: str) -> None:
         page.replace("</body>", f"<script>{IV_PROCESSING}</script></body>"),
         "interview-processing.png",
         "1100,820",
+        theme="light",
+    )
+    shot(
+        chrome,
+        page.replace("</body>", f"<script>{IV_OFFER}</script></body>"),
+        "interview-offer.png",
+        "1100,760",
         theme="light",
     )
 

@@ -78,6 +78,22 @@ qsurface interview close <id> --summary "..."              # writes the transcri
 
 `open` returns immediately, leaving a detached server. Each `ask` blocks until the answer comes back and prints it as JSON — `--text` prints just the answer text. `--option` adds suggested answers as chips the respondent can click to build on; repeat it for several.
 
+### Ending with a form, when the interview earned one
+
+An interview reliably ends with a few things that have stopped being discussion and become decisions. Hand off rather than stopping:
+
+```bash
+qsurface interview hold <id>                     # page says the questions are over
+qsurface interview distill <id> --only 2,4       # scaffold from the exchanges that matter
+# rewrite the TODO drafts into real questions with real options and costs
+qsurface validate <id>-decisions
+qsurface interview offer <id> --questionnaire <id>-decisions --message "..."
+```
+
+`offer` blocks and prints whether it was taken, with the response paths. Taking it opens the form in the tab the interview is already in.
+
+**Only offer when there is something to decide.** A form generated because the workflow allows one is exactly the manufactured-questions failure the gate exists to prevent. If the interview produced observations rather than forks, `close` and say what you learned.
+
 **Always `close`.** The transcript is written after every answer, so nothing is lost if you don't, but an unclosed session leaves a server running until it goes idle. `qsurface interview list` shows what is open.
 
 If `ask` exits non-zero, the user hasn't answered within the timeout or the session was closed. That means "still waiting", not "declined" — the answer box keeps their draft.

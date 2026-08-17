@@ -46,8 +46,8 @@ Two things are worth knowing before changing anything.
 ## Testing
 
 ```bash
-python3 -m unittest discover -s tests -t .   # 107 tests
-python3 scripts/check_browser.py             # 41 client-side checks
+python3 -m unittest discover -s tests -t .   # 117 tests
+python3 scripts/check_browser.py             # 49 client-side checks
 ```
 
 The Python suite covers spec validation, response building, conditional visibility, persistence, rendering, path resolution, config, follow-up panels, the interview state machine, and `distill` — the last driven through the CLI, since `qsurface.py` shares a name with the `qsurface` package and the package wins any plain import.

@@ -64,6 +64,12 @@ An interview reliably ends with things that have become precise enough to decide
 
 The tool cannot tell which parts of a conversation became decisions, so it does not pretend to — every question it writes is a TODO the agent is expected to replace.
 
+The form then opens in the tab the interview is already in, if you want it:
+
+![The follow-up offer](docs/images/interview-offer.png)
+
+Declining is a normal answer, and the transcript records which it was.
+
 ---
 
 ## Why "Question Surface"?
@@ -88,7 +94,7 @@ It was named mid-session in the same mood that produced it, and it stuck because
 
 Standard library only, so no dependency can move out from under it. Loopback only, with no auth and no session model, because it must never be reachable off the machine. The server exits on submit, so there is no daemon left running. Validation fails at load, so a broken questionnaire costs you nothing.
 
-It has 107 Python tests and 41 client-side checks that drive a real browser, running on Python 3.9 through 3.13 in CI. Those checks have caught six real defects so far, including two that were passing while testing nothing at all.
+It has 117 Python tests and 49 client-side checks that drive a real browser, running on Python 3.9 through 3.13 in CI. Those checks have caught six real defects so far, including two that were passing while testing nothing at all.
 
 That last part was an accident. "No bugs. Make no mistakes." went into the original spec as a joke, and then drove a CI matrix, a browser harness, and a habit of verifying claims rather than asserting them. The tool was built in under a day with Claude Code, which is worth knowing mostly because the joke turned out to be the most productive line in the specification.
 

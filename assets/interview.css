@@ -330,3 +330,30 @@
   .iv-layout { padding: 26px 16px 90px; }
   .iv-prompt { font-size: 18px; }
 }
+
+/* ---------- the follow-up offer ---------- */
+
+.iv-offer { text-align: center; padding: 42px 30px; }
+.iv-offer-kicker {
+  font-size: 11px;
+  letter-spacing: .09em;
+  text-transform: uppercase;
+  color: var(--ok);
+  font-weight: 600;
+  margin-bottom: 12px;
+}
+.iv-offer h2 { font-size: 21px; margin: 0 0 12px; letter-spacing: -.01em; }
+.iv-offer-body {
+  font-size: 14.5px;
+  line-height: 1.6;
+  color: var(--text-2);
+  margin: 0 auto 24px;
+  max-width: 52ch;
+}
+.iv-offer-actions {
+  display: flex;
+  gap: 10px;
+  justify-content: center;
+  flex-wrap: wrap;
+}
+.iv-offer-note { font-size: 12px; color: var(--text-3); margin: 18px 0 0; }

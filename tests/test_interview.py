@@ -14,6 +14,7 @@ import os
 import tempfile
 import threading
 import time
+import traceback
 import unittest
 from pathlib import Path
 from unittest import mock
@@ -22,7 +23,7 @@ import sys
 
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 
-from qsurface import interview, paths  # noqa: E402
+from qsurface import interview, paths, spec as spec_mod, store  # noqa: E402
 
 
 class InterviewTestCase(unittest.TestCase):
@@ -35,6 +36,28 @@ class InterviewTestCase(unittest.TestCase):
         )
         patcher.start()
         self.addCleanup(patcher.stop)
+
+    def respondent(self, fn) -> threading.Thread:
+        """Run the answering side in a thread, surfacing anything it raises.
+
+        A helper thread that dies quietly shows up in the main thread as a
+        timeout with no cause, which is how a missing import once looked like
+        a deadlock.
+        """
+        errors: list[str] = []
+
+        def wrapped():
+            try:
+                fn()
+            except BaseException:                     # noqa: BLE001
+                errors.append(traceback.format_exc())
+
+        thread = threading.Thread(target=wrapped, daemon=True)
+        thread.start()
+        self.addCleanup(
+            lambda: self.assertFalse(errors, "respondent thread raised:\n" + "".join(errors))
+        )
+        return thread
 
     def record(self, **overrides) -> dict:
         base = interview.new_record("t", "Test interview", "systems design", 8999)
@@ -312,3 +335,126 @@ class TestQuestionContext(InterviewTestCase):
                 session.answer(session.pending["seq"], "ok", False, [])
                 return
             time.sleep(0.005)
+
+
+class TestFollowUpHandoff(InterviewTestCase):
+    """An interview that ends with real forks offers the form in the same tab."""
+
+    SURVEY = {
+        "id": "followup",
+        "title": "Pinning it down",
+        "sections": [
+            {
+                "title": "Decisions",
+                "questions": [
+                    {"id": "shape", "type": "text", "prompt": "Which shape?"}
+                ],
+            }
+        ],
+    }
+
+    def spec(self) -> dict:
+        return spec_mod.validate(json.loads(json.dumps(self.SURVEY)))
+
+    def wait_for(self, predicate, tries=200):
+        for _ in range(tries):
+            if predicate():
+                return True
+            time.sleep(0.005)
+        return False
+
+    def test_holding_is_announced_once_then_the_poll_blocks(self):
+        session = interview.Session(self.record())
+        session.hold()
+        self.assertTrue(session.wait_for_question(0, "")["holding"])
+        # Announcing it on every poll would make the long-poll a busy loop.
+        with mock.patch.object(interview, "POLL_SECONDS", 0.2):
+            self.assertTrue(session.wait_for_question(0, "holding").get("waiting"))
+
+    def test_hold_writes_the_transcript(self):
+        session = interview.Session(self.record())
+        session.hold()
+        self.assertTrue(list((paths.responses_dir() / "t").glob("*.json")))
+
+    def test_an_accepted_offer_returns_where_the_answers_went(self):
+        session = interview.Session(self.record())
+        result = {}
+
+        def respondent():
+            self.assertTrue(self.wait_for(lambda: session.phase == "offering"))
+            self.assertTrue(session.respond_to_offer(True))
+            response = store.build_response(self.spec(), {"shape": {"value": "a"}})
+            written = store.write(paths.responses_dir(), self.spec(), response)
+            session.record_survey(written, response)
+
+        self.respondent(respondent)
+        result = session.make_offer(self.spec(), "two things", timeout=5)
+
+        self.assertEqual(result["outcome"], "taken")
+        self.assertIn("followup", result["json"])
+        self.assertEqual(result["counts"]["answered"], 1)
+
+    def test_a_declined_offer_says_so_and_asks_nothing_further(self):
+        session = interview.Session(self.record())
+
+        def respondent():
+            self.assertTrue(self.wait_for(lambda: session.phase == "offering"))
+            session.respond_to_offer(False)
+
+        self.respondent(respondent)
+        result = session.make_offer(self.spec(), "", timeout=5)
+        self.assertEqual(result["outcome"], "declined")
+
+    def test_the_transcript_records_the_handoff_either_way(self):
+        taken = interview.Session(self.record())
+
+        def accept():
+            self.assertTrue(self.wait_for(lambda: taken.phase == "offering"))
+            taken.respond_to_offer(True)
+            response = store.build_response(self.spec(), {"shape": {"value": "a"}})
+            taken.record_survey(
+                store.write(paths.responses_dir(), self.spec(), response), response
+            )
+
+        self.respondent(accept)
+        taken.make_offer(self.spec(), "", timeout=5)
+        document = json.loads(
+            sorted((paths.responses_dir() / "t").glob("*.json"))[-1].read_text()
+        )
+        self.assertTrue(document["followup"]["taken"])
+        self.assertEqual(document["followup"]["questionnaire_id"], "followup")
+        self.assertIn("Followed by", interview.transcript_markdown(taken.record))
+
+    def test_a_declined_handoff_is_recorded_as_offered(self):
+        session = interview.Session(self.record())
+        self.respondent(
+            lambda: (
+                self.wait_for(lambda: session.phase == "offering"),
+                session.respond_to_offer(False),
+            )
+        )
+        session.make_offer(self.spec(), "", timeout=5)
+        self.assertEqual(session.record["followup"], {"offered": True, "taken": False})
+        self.assertIn("offered and declined", interview.transcript_markdown(session.record))
+
+    def test_the_offer_can_only_be_answered_once(self):
+        session = interview.Session(self.record())
+        self.respondent(lambda: session.make_offer(self.spec(), "", 5))
+        self.assertTrue(self.wait_for(lambda: session.phase == "offering"))
+        self.assertTrue(session.respond_to_offer(False))
+        # A second tab, or a double click, must not reopen a settled offer.
+        self.assertFalse(session.respond_to_offer(True))
+
+    def test_an_offer_that_is_never_answered_gives_up(self):
+        session = interview.Session(self.record())
+        result = session.make_offer(self.spec(), "", timeout=0.3)
+        self.assertEqual(result["outcome"], "no answer")
+
+    def test_the_survey_phase_is_announced_to_a_reloaded_page(self):
+        # Accepting, then reloading, must land back on the form rather than on
+        # an offer that has already been taken.
+        session = interview.Session(self.record())
+        self.respondent(lambda: session.make_offer(self.spec(), "", 5))
+        self.assertTrue(self.wait_for(lambda: session.phase == "offering"))
+        session.respond_to_offer(True)
+        self.assertTrue(session.wait_for_question(0, "")["survey"])
