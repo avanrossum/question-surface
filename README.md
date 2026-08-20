@@ -1,4 +1,7 @@
-# The Docket
+<picture>
+  <source media="(prefers-color-scheme: dark)" srcset="docs/images/wordmark-dark-tagline.svg">
+  <img alt="The Docket — better questions from your agent" src="docs/images/wordmark-light-tagline.svg" width="330">
+</picture>
 
 > "Ok, you know what? Please just put all the questions you have for me in a form on an HTML page that saves the answers to a file and I'll answer them all at once."
 
