@@ -21,14 +21,23 @@ Two modes, and they work in sequence as often as alone.
 ## Install
 
 ```bash
+pipx install docket     # or: uv tool install docket, or pip install docket
+docket setup
+```
+
+`docket setup` installs the Claude Code skill into `~/.claude/skills/` and prints the one line to add to your global `CLAUDE.md`. Without the skill an agent has no reason to reach for the tool at all.
+
+Or from a clone, if you want to edit it:
+
+```bash
 git clone https://github.com/avanrossum/docket.git
 cd docket
 ./install.sh
 ```
 
-Python 3.9+ and nothing else. No npm, no pip install, no build step, no lockfile to rot.
+That symlinks rather than copies, so `git pull` updates the tool and the skill together.
 
-The installer puts `docket` on your PATH, symlinks the skill into `~/.claude/skills/` so every Claude Code session can see it, and offers to add one line to your global `CLAUDE.md`. It asks before that last one, and `./install.sh --uninstall` removes everything it added. Run `docket doctor` any time to see what is wired up.
+**Python 3.9+ and nothing else.** No runtime dependencies, no build step, no lockfile to rot — the dependency list in `pyproject.toml` is empty and staying that way. Run `docket doctor` any time to see what is wired up.
 
 ---
 

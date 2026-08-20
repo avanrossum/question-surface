@@ -1,0 +1,15 @@
+#!/usr/bin/env python3
+"""Run Docket from a clone, without installing it.
+
+`install.sh` symlinks this onto PATH. An installed copy uses the console entry
+point declared in pyproject.toml instead and never touches this file.
+"""
+
+import sys
+from pathlib import Path
+
+sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
+
+from docket.cli import main  # noqa: E402
+
+raise SystemExit(main())

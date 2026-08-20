@@ -19,7 +19,7 @@ from pathlib import Path
 from . import spec as spec_mod
 from . import store
 
-ASSETS = Path(__file__).resolve().parent.parent / "assets"
+ASSETS = Path(__file__).resolve().parent / "assets"
 
 # Inline formatting applied *after* escaping: `code`, **bold**, *italic*.
 _CODE = re.compile(r"`([^`]+)`")

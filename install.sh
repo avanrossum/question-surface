@@ -125,9 +125,9 @@ if [ -L "$LEGACY_SKILL" ]; then
   rm -f "$LEGACY_SKILL"
   say "removed the pre-2.0 question-surface skill"
 fi
-ln -sfn "$ROOT/docket.py" "$BIN_LINK"
-chmod +x "$ROOT/docket.py"
-say "$BIN_LINK -> $ROOT/docket.py"
+ln -sfn "$ROOT/bin/docket" "$BIN_LINK"
+chmod +x "$ROOT/bin/docket"
+say "$BIN_LINK -> $ROOT/bin/docket"
 case ":$PATH:" in
   *":$BIN_DIR:"*) say "$BIN_DIR is on PATH" ;;
   *) say "NOTE: $BIN_DIR is not on PATH — add this to your shell profile:"
@@ -139,8 +139,8 @@ if [ -e "$SKILL_LINK" ] && [ ! -L "$SKILL_LINK" ]; then
   say "SKIPPED: $SKILL_LINK exists and is not a symlink — not overwriting it"
 else
   mkdir -p "$SKILL_DIR"
-  ln -sfn "$ROOT/.claude/skills/docket" "$SKILL_LINK"
-  say "$SKILL_LINK -> $ROOT/.claude/skills/docket"
+  ln -sfn "$ROOT/docket/skill" "$SKILL_LINK"
+  say "$SKILL_LINK -> $ROOT/docket/skill"
 fi
 
 step "3. Gate pointer in $CLAUDE_MD"
@@ -169,7 +169,7 @@ else
 fi
 
 step "Checking the install"
-python3 "$ROOT/docket.py" doctor || true
+python3 "$ROOT/bin/docket" doctor || true
 
 echo
 say "Done. Try: docket list"

@@ -27,8 +27,8 @@ from pathlib import Path
 # The single point of change if this directory is ever renamed.
 STATE_DIR_NAME = ".docket"
 
-TOOL_ROOT = Path(__file__).resolve().parent.parent
-BUNDLED_QUESTIONNAIRES = TOOL_ROOT / "questionnaires"
+TOOL_ROOT = Path(__file__).resolve().parent
+BUNDLED_QUESTIONNAIRES = Path(__file__).resolve().parent / "questionnaires"
 
 # Markers that mean "the root of a project" — checked in order at each level.
 ROOT_MARKERS = (".git", ".hg", ".svn")

@@ -29,9 +29,9 @@ jobs:
         run: python -m unittest discover -s tests -t . -v
       - name: Check the CLI starts and resolves paths
         run: |
-          python docket.py --version
-          python docket.py validate example
-          python docket.py list
+          python -m docket --version
+          python -m docket validate example
+          python -m docket list
 
   browser:
     # Covers assets/app.js, which the Python suite cannot reach. Both bugs found

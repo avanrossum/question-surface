@@ -1,6 +1,6 @@
 """Tests for `docket interview distill`.
 
-Driven through the CLI rather than by importing it: `docket.py` shares its
+Driven through the CLI rather than by importing it: `bin/docket` runs the same code the console script does; it shares its
 name with the `docket` package, so the package wins any plain import, and
 running the command is the truer test anyway.
 
@@ -84,7 +84,7 @@ class DistillTestCase(unittest.TestCase):
     def distill(self, *args) -> subprocess.CompletedProcess:
         env = dict(os.environ, DOCKET_PROJECT=str(self.project))
         return subprocess.run(
-            [sys.executable, str(ROOT / "docket.py"), "interview", "distill", *args],
+            [sys.executable, str(ROOT / "bin" / "docket"), "interview", "distill", *args],
             capture_output=True,
             text=True,
             env=env,

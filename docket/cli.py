@@ -29,18 +29,15 @@ import urllib.error
 import webbrowser
 from pathlib import Path
 
-ROOT = Path(__file__).resolve().parent
-sys.path.insert(0, str(ROOT))
-
-from docket import __version__  # noqa: E402
-from docket import browser  # noqa: E402
-from docket import config as config_mod  # noqa: E402
-from docket import interview  # noqa: E402
-from docket import paths  # noqa: E402
-from docket import render as render_mod  # noqa: E402
-from docket import server as server_mod  # noqa: E402
-from docket import spec as spec_mod  # noqa: E402
-from docket import store  # noqa: E402
+from . import __version__
+from . import browser
+from . import config as config_mod
+from . import interview
+from . import paths
+from . import render as render_mod
+from . import server as server_mod
+from . import spec as spec_mod
+from . import store
 
 
 def find_spec(reference: str) -> Path | None:
@@ -377,7 +374,7 @@ def cmd_doctor(args) -> int:
             print(f"          {detail}")
 
     print(f"docket {__version__}")
-    print(f"  installed at {ROOT}")
+    print(f"  installed at {paths.TOOL_ROOT}")
     print()
 
     major, minor = sys.version_info[:2]
@@ -400,7 +397,7 @@ def cmd_doctor(args) -> int:
     if skill.is_symlink():
         target = f"-> {os.readlink(skill)}"
     check(linked, "skill installed for Claude Code", target or (
-        "" if linked else f"expected {skill} — run ./install.sh"
+        "" if linked else f"expected {skill} — run `docket setup`"
     ))
 
     settings = config_mod.load()
@@ -420,7 +417,9 @@ def cmd_doctor(args) -> int:
     check(
         pointer,
         "gate pointer in global CLAUDE.md",
-        "" if pointer else "agents will assume the default — run ./install.sh to add it",
+        ""
+        if pointer
+        else "agents will assume the default — `docket setup` prints the line to add",
     )
 
     chrome = browser.find_chrome()
@@ -471,7 +470,7 @@ def cmd_interview_open(args) -> int:
     log_path = interview.sessions_dir() / f"{args.interview}.log"
     with open(log_path, "ab") as log:
         child = subprocess.Popen(
-            [sys.executable, str(ROOT / "docket.py"), "interview", "_serve",
+            [sys.executable, "-m", "docket", "interview", "_serve",
              args.interview],
             stdout=log,
             stderr=log,
@@ -780,6 +779,64 @@ def cmd_archive(args) -> int:
     return 0
 
 
+
+SKILL_SOURCE = paths.TOOL_ROOT / "skill"
+
+
+def skill_target() -> Path:
+    return Path.home() / ".claude" / "skills" / "docket"
+
+
+def cmd_setup(args) -> int:
+    """Finish an install that pip could not finish.
+
+    `pip install docket` puts the command on PATH and stops there. The skill is
+    what makes an agent reach for the tool at all, and it has to live under
+    ~/.claude/skills/ where Claude Code looks — which is outside anything pip
+    owns. Copied rather than symlinked, because site-packages may sit in a
+    virtualenv that is later moved or removed.
+    """
+    target = skill_target()
+
+    if args.remove:
+        if target.is_symlink() or target.exists():
+            if target.is_symlink():
+                target.unlink()
+            else:
+                shutil.rmtree(target)
+            print(f"removed {target}")
+        else:
+            print("no skill installed")
+        print("\nRemove the gate line from ~/.claude/CLAUDE.md by hand if you added one.")
+        return 0
+
+    source = SKILL_SOURCE / "SKILL.md"
+    if not source.exists():
+        raise SystemExit(f"error: the packaged skill is missing at {source}")
+
+    if target.is_symlink():
+        # A clone install linked this. Replacing it would quietly detach the
+        # skill from the repository the user is editing.
+        print(f"{target} is a symlink into a clone — leaving it alone.")
+        print("  That install updates with `git pull`; this one would not.")
+        return 0
+
+    target.mkdir(parents=True, exist_ok=True)
+    destination = target / "SKILL.md"
+    updated = destination.exists() and destination.read_text() != source.read_text()
+    shutil.copyfile(source, destination)
+    print(f"{'updated' if updated else 'installed'} {destination}")
+
+    print()
+    print("One line for your global ~/.claude/CLAUDE.md, so agents know your gate")
+    print("without spending a tool call to look it up:")
+    print()
+    print(f"    {config_mod.gate_sentence()}")
+    print()
+    print("Change the number any time with `docket config gate <n>`, then re-run this.")
+    return 0
+
+
 def main(argv: list[str] | None = None) -> int:
     parser = argparse.ArgumentParser(
         prog="docket", description="Batch question collection."
@@ -841,6 +898,13 @@ def main(argv: list[str] | None = None) -> int:
 
     p = sub.add_parser("doctor", help="check that this install is wired up")
     p.set_defaults(func=cmd_doctor)
+
+    p = sub.add_parser(
+        "setup", help="install the Claude Code skill (needed after a pip install)"
+    )
+    p.add_argument("--yes", action="store_true", help="accepted for symmetry; no prompts")
+    p.add_argument("--remove", action="store_true", help="remove the installed skill")
+    p.set_defaults(func=cmd_setup)
 
     p = sub.add_parser("archive", help="retire a questionnaire, keeping its responses")
     p.add_argument("questionnaire")

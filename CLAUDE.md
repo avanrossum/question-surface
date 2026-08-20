@@ -49,12 +49,16 @@ A response format change that adds a field is a minor bump; anything that makes 
 ## Layout
 
 ```
-docket.py                # CLI
-docket/                  # spec, store, render, server, paths, config, browser, interview
-assets/                  # app.css + app.js, inlined into the rendered page
-questionnaires/          # bundled reference questionnaire, ships with the tool
+bin/docket               # entry point when running from a clone
+docket/                  # the package — everything that ships
+  cli.py                 # the command; console entry point is docket.cli:main
+  spec, store, render, server, paths, config, browser, interview
+  assets/                # css + js, inlined into the rendered page
+  questionnaires/        # bundled reference questionnaire
+  skill/                 # the Claude Code skill, copied out by `docket setup`
+pyproject.toml           # packaging; dependencies are deliberately empty
 scripts/check_browser.py # client-side checks
-install.sh               # user install / uninstall
+install.sh               # install from a clone
 tests/
 .docket/                 # this project's own questionnaires and responses
 ```

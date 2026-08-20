@@ -75,11 +75,11 @@ def gate_sentence(gate: int | None = None) -> str:
     gate = load()["gate"] if gate is None else gate
     if not gate:
         return (
-            "Docket: no fixed question count triggers the surface — "
+            "The Docket: no fixed question count triggers the surface — "
             "use the `docket` skill's judgement guidance."
         )
     return (
-        f"Docket: {gate} or more questions for the user go through the "
+        f"The Docket: {gate} or more questions for the user go through the "
         f"`docket` skill, never a numbered list in chat. Fewer than {gate} "
         "also go through it when the answers would benefit from exposition, "
         "detailed answer choices, or open-ended interaction."

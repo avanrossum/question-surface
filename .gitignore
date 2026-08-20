@@ -7,3 +7,16 @@ __pycache__/
 
 # Interview session state: a running server's port, pid and token.
 .docket/interviews/
+
+# Never put a symlink here pointing back into docket/skill/. The build walks
+# it, finds SKILL.md under two paths, and silently omits it from the canonical
+# one — shipping a package with no skill in it, with no error. Gitignoring the
+# link is not enough; it has to not exist. `./install.sh` and `docket setup`
+# both place the skill in ~/.claude/skills/ instead, which is where Claude Code
+# actually looks.
+.claude/skills/docket
+
+# Build artifacts. Releases are built by the publish workflow, not committed.
+/dist/
+/build/
+*.egg-info/

@@ -4,6 +4,26 @@ Semver. Newest first. The tool carries its own version because questionnaires au
 
 ---
 
+## 2.2.0 — 2026-08-20
+
+### Added
+
+- **Installable from PyPI**: `pipx install docket` (or `uv tool install`, or `pip install`), then `docket setup`. Published by GitHub Actions on tag through PyPI trusted publishing, so no API token exists anywhere.
+- **`docket setup`** — installs the Claude Code skill into `~/.claude/skills/` and prints the gate line for the global `CLAUDE.md`. pip puts the command on PATH and stops there; the skill is what makes an agent reach for the tool at all, and it lives outside anything pip owns. Copied rather than symlinked, since site-packages may sit in a virtualenv that later moves. It refuses to overwrite a symlink from a clone install, which would silently detach the skill from the repository someone is editing.
+- The release workflow **verifies the wheel contains its runtime files** before publishing. A wheel missing its CSS, JS, bundled questionnaire or skill installs cleanly and only fails in use.
+
+### Changed
+
+- **The CLI moved into the package** as `docket/cli.py`, with `bin/docket` as the entry point for clone installs and `python -m docket` also working. An installed distribution has no repository root to run a script from.
+- **`assets/`, `questionnaires/` and the skill now live inside the package.** All three are read from disk at runtime, and a path reaching outside the package works from a clone and vanishes in site-packages.
+- The detached interview server is spawned as `python -m docket` rather than by file path, so it behaves identically installed or from a clone.
+- The gate sentence and `doctor` say **The Docket**, and `doctor` now points a pip user at `docket setup` rather than at a script they do not have.
+
+### Notes
+
+- A convenience symlink at `.claude/skills/docket` pointing back into `docket/skill/` **silently emptied the skill from both artifacts**. The build walks the link, finds `SKILL.md` under two paths, and omits it from the canonical one — no error, just a package with no skill in it. Gitignoring the link is not enough; it must not exist. `.gitignore` carries the warning.
+- Verified by installing the built wheel into a clean virtualenv and driving it from an unrelated directory: console script, bundled questionnaire resolution, inlined assets, skill placement, `doctor`, and a full interview round trip through the detached server.
+
 ## 2.1.0 — 2026-08-20
 
 ### Changed

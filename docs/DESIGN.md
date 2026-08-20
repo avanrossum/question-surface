@@ -23,7 +23,8 @@ The constraints this tool is built under, why they hold, and how it is checked.
 ## How it is put together
 
 ```
-docket.py              CLI
+bin/docket             entry point for a clone; installs use docket.cli:main
+docket/cli.py          the command
 docket/spec.py         the single authority on what a valid questionnaire is
 docket/store.py        response building, visibility, persistence
 docket/render.py       spec and interview record → HTML
@@ -32,7 +33,9 @@ docket/interview.py    session state machine and detached server
 docket/paths.py        where questionnaires and responses live
 docket/config.py       per-user settings
 docket/browser.py      locating and driving a headless browser
-assets/                  app.css, app.js, interview.css, interview.js — inlined at render
+docket/assets/         css and js, inlined at render
+docket/questionnaires/ the bundled reference questionnaire
+docket/skill/          the Claude Code skill, copied out by `docket setup`
 ```
 
 Two things are worth knowing before changing anything.
@@ -50,7 +53,7 @@ python3 -m unittest discover -s tests -t .   # 117 tests
 python3 scripts/check_browser.py             # 49 client-side checks
 ```
 
-The Python suite covers spec validation, response building, conditional visibility, persistence, rendering, path resolution, config, follow-up panels, the interview state machine, and `distill` — the last driven through the CLI, since `docket.py` shares a name with the `docket` package and the package wins any plain import.
+The Python suite covers spec validation, response building, conditional visibility, persistence, rendering, path resolution, config, follow-up panels, the interview state machine, and `distill` — the last driven through the CLI as a subprocess, because it is the CLI's behaviour that matters rather than the function's.
 
 The client-side checks cover `assets/app.js` and `assets/interview.js`, which the Python suite cannot reach. They drive a real Chromium-family browser if one is installed and skip cleanly if not, rather than pulling in a JavaScript toolchain and breaking the no-build-step constraint. `--require` turns a missing browser into a failure, which is what CI uses.
 
