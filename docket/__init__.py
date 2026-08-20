@@ -9,4 +9,4 @@ in a form an agent reads directly.
 Entry point is `docket.cli:main`, exposed as the `docket` command.
 """
 
-__version__ = "2.3.0"
+__version__ = "2.3.1"

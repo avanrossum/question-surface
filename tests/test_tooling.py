@@ -286,3 +286,47 @@ class TestFollowsAnInterview(unittest.TestCase):
         html = render.render(self.spec, prior=self.transcript)
         self.assertNotIn("Never shown", html)
         self.assertNotIn("Blank one", html)
+
+
+class TestGatePointerAdvice(unittest.TestCase):
+    """The CLAUDE.md line is only needed when the gate is not the default.
+
+    The skill states the default in its own text, so a fresh install needs no
+    pointer — and telling every new user their working install has a failure is
+    worse than saying nothing.
+    """
+
+    def setUp(self):
+        self.tmp = tempfile.TemporaryDirectory()
+        self.addCleanup(self.tmp.cleanup)
+        patcher = mock.patch.dict(
+            os.environ, {"XDG_CONFIG_HOME": self.tmp.name}, clear=False
+        )
+        patcher.start()
+        self.addCleanup(patcher.stop)
+
+    def run_doctor(self) -> str:
+        import subprocess
+
+        root = Path(__file__).resolve().parent.parent
+        result = subprocess.run(
+            [sys.executable, str(root / "bin" / "docket"), "doctor"],
+            capture_output=True,
+            text=True,
+            env=dict(os.environ, XDG_CONFIG_HOME=self.tmp.name),
+            timeout=60,
+        )
+        return result.stdout
+
+    def test_a_default_gate_needs_no_pointer(self):
+        out = self.run_doctor()
+        line = [l for l in out.splitlines() if "gate pointer" in l][0]
+        self.assertIn("ok", line)
+        self.assertIn("not needed", out)
+
+    def test_a_changed_gate_asks_for_the_pointer(self):
+        config.set_value("gate", 3)
+        out = self.run_doctor()
+        line = [l for l in out.splitlines() if "gate pointer" in l][0]
+        self.assertIn("FAIL", line)
+        self.assertIn("your gate is 3", out)

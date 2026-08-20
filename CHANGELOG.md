@@ -4,6 +4,13 @@ Semver. Newest first. The tool carries its own version because questionnaires au
 
 ---
 
+## 2.3.1 — 2026-08-20
+
+### Fixed
+
+- **`doctor` reported a failure on every fresh install.** It flagged a missing gate pointer in the global `CLAUDE.md` unconditionally, but the skill states the default of five in its own text — so an untouched install needs no line anywhere and was already correct. The check now only asks for the pointer when the configured gate differs from the default, and says why when it does. Anyone installing from PyPI and running `docket doctor` would otherwise have been told their working install was broken.
+- **`docket setup` gave the same advice.** It now prints the line only when the gate is non-default, and otherwise says there is nothing to add.
+
 ## 2.3.0 — 2026-08-20
 
 ### Added

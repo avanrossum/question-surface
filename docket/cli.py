@@ -407,6 +407,10 @@ def cmd_doctor(args) -> int:
         f"serve timeout = {settings['timeout_minutes'] or 'none'} min",
     )
 
+    # The pointer only earns its place when the gate is not the default. The
+    # skill states the default in its own text, so a fresh install with an
+    # untouched gate needs no line at all — and reporting a failure there tells
+    # every new user their working install is broken.
     claude_md = Path.home() / ".claude" / "CLAUDE.md"
     pointer = False
     if claude_md.exists():
@@ -414,13 +418,23 @@ def cmd_doctor(args) -> int:
             pointer = "Docket:" in claude_md.read_text(encoding="utf-8")
         except OSError:
             pointer = False
-    check(
-        pointer,
-        "gate pointer in global CLAUDE.md",
-        ""
-        if pointer
-        else "agents will assume the default — `docket setup` prints the line to add",
-    )
+    default_gate = config_mod.DEFAULTS["gate"]
+    if settings["gate"] == default_gate:
+        check(
+            True,
+            "gate pointer in global CLAUDE.md",
+            "not needed — the skill states the default of "
+            f"{default_gate} itself",
+        )
+    else:
+        check(
+            pointer,
+            "gate pointer in global CLAUDE.md",
+            ""
+            if pointer
+            else f"your gate is {settings['gate']} but the skill says "
+            f"{default_gate} — `docket setup` prints the line to add",
+        )
 
     chrome = browser.find_chrome()
     check(
@@ -827,13 +841,23 @@ def cmd_setup(args) -> int:
     shutil.copyfile(source, destination)
     print(f"{'updated' if updated else 'installed'} {destination}")
 
+    settings = config_mod.load()
+    default_gate = config_mod.DEFAULTS["gate"]
     print()
-    print("One line for your global ~/.claude/CLAUDE.md, so agents know your gate")
-    print("without spending a tool call to look it up:")
+    if settings["gate"] == default_gate:
+        print(f"That is everything — your gate is the default of {default_gate}, which")
+        print("the skill already states, so there is nothing to add anywhere.")
+        print()
+        print(f"If you change it with `docket config gate <n>`, re-run this and it")
+        print("will print a line to paste into your global ~/.claude/CLAUDE.md, so")
+        print("agents read your number instead of assuming the default.")
+        return 0
+
+    print(f"Your gate is {settings['gate']}, but the skill states the default of")
+    print(f"{default_gate}. Paste this into your global ~/.claude/CLAUDE.md so agents")
+    print("read your number without spending a tool call to find it:")
     print()
     print(f"    {config_mod.gate_sentence()}")
-    print()
-    print("Change the number any time with `docket config gate <n>`, then re-run this.")
     return 0
 
 
