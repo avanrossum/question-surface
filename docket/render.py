@@ -16,6 +16,7 @@ import json
 import re
 from pathlib import Path
 
+from . import brand
 from . import spec as spec_mod
 from . import store
 
@@ -179,7 +180,8 @@ def render(
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>{html.escape(spec["title"])}</title>
+<title>{html.escape(spec["title"])} — The Docket</title>
+{brand.favicon_link()}
 <style>{_asset("app.css")}</style>
 </head>
 <body>
@@ -188,7 +190,7 @@ def render(
 <div class="layout">
   <aside class="sidebar">
     <div class="sidebar-inner">
-      <div class="brand">Docket</div>
+      {brand.wordmark(26)}
       <div class="progress-readout"><span id="progressCount">0</span> of {len(questions)} answered</div>
       <nav class="nav">{nav_html}</nav>
       {docs_html}
@@ -225,6 +227,7 @@ def render(
       </div>
     </div>
     <div class="result" id="result" hidden></div>
+    {brand.FOOTER}
   </main>
 </div>
 
@@ -264,14 +267,15 @@ def interview_page(record: dict) -> str:
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>{html.escape(record["title"])}</title>
+<title>{html.escape(record["title"])} — The Docket</title>
+{brand.favicon_link()}
 <style>{_asset("app.css")}
 {_asset("interview.css")}</style>
 </head>
 <body>
 <div class="iv-layout">
   <header class="iv-head">
-    <div class="iv-kicker">Interview</div>
+    <div class="iv-brandline">{brand.wordmark(24)}<span class="iv-kicker">Interview</span></div>
     <h1>{html.escape(record["title"])}</h1>
     <div class="iv-meta">{"".join(f"<span>{part}</span>" for part in meta)}</div>
   </header>
@@ -341,6 +345,7 @@ def interview_page(record: dict) -> str:
 
   <div class="iv-state" id="stateDone">
     <div class="iv-card iv-done">
+      {brand.animated_icon(52)}
       <h2>Interview complete</h2>
       <div id="ivDoneBody">
         <p>The transcript is saved. You can close this tab.</p>
@@ -356,6 +361,7 @@ def interview_page(record: dict) -> str:
       coming — you can close this tab.</p>
     </div>
   </div>
+  {brand.FOOTER}
 </div>
 
 <script>window.__IV__ = {json.dumps(bootstrap)};</script>

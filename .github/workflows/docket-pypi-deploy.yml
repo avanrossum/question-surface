@@ -2,7 +2,7 @@ name: publish
 
 # Trusted publishing: PyPI trusts this repository and this workflow filename
 # directly, so no API token exists anywhere. The pending publisher on PyPI must
-# name this file (publish.yml) and the `pypi` environment below.
+# name this file (docket-pypi-deploy.yml) and the `pypi` environment below.
 on:
   push:
     tags: ["v*"]

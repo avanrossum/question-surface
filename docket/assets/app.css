@@ -16,6 +16,9 @@
   --warn: #a8621a;
   --shadow: 0 1px 2px rgba(28, 26, 23, .05), 0 4px 16px rgba(28, 26, 23, .04);
   --radius: 10px;
+  --brand-ground: #f2efe8;
+  --brand-ink: #1c1a17;
+  --brand-accent: #a07d2c;
   --mono: ui-monospace, SFMono-Regular, "SF Mono", Menlo, monospace;
   --sans: -apple-system, BlinkMacSystemFont, "Segoe UI", Inter, system-ui, sans-serif;
 }
@@ -31,6 +34,9 @@
     --text-2: #a8a294;
     --text-3: #7d786b;
     --accent: #d4ab5a;
+    --brand-ground: #26231e;
+    --brand-ink: #f4f1ea;
+    --brand-accent: #d4ab5a;
     --accent-soft: #2e2718;
     --ok: #6fb98a;
     --warn: #d99a53;
@@ -48,6 +54,9 @@
   --text-2: #a8a294;
   --text-3: #7d786b;
   --accent: #d4ab5a;
+  --brand-ground: #26231e;
+  --brand-ink: #f4f1ea;
+  --brand-accent: #d4ab5a;
   --accent-soft: #2e2718;
   --ok: #6fb98a;
   --warn: #d99a53;
@@ -441,3 +450,69 @@ code {
   .nav-item { padding: 6px; }
   .main { padding: 24px 20px 120px; }
 }
+
+/* ---------- identity ----------
+   The mark is inlined as SVG rather than linked: the page is served from
+   loopback and must render with nothing fetched. Its colours are the page's
+   own tokens, so one copy of the mark serves both themes. */
+
+.dk-lockup { display: flex; align-items: center; gap: 9px; }
+.dk-icon { display: block; flex: none; }
+.dk-stack { display: flex; flex-direction: column; gap: 3px; }
+.dk-name {
+  font-size: 17px;
+  font-weight: 600;
+  letter-spacing: -.02em;
+  line-height: 1;
+  color: var(--text);
+}
+.dk-tagline {
+  font-size: 11px;
+  font-weight: 400;
+  letter-spacing: .01em;
+  line-height: 1.2;
+  color: var(--text-3);
+}
+
+/* the caret working down the rule, clearing each matter as it goes */
+@keyframes dkCaret {
+  0%, 18%   { transform: translateY(0); }
+  25%, 43%  { transform: translateY(10.5px); }
+  50%, 68%  { transform: translateY(21px); }
+  75%, 96%  { transform: translateY(31.5px); }
+  100%      { transform: translateY(0); }
+}
+@keyframes dkLit {
+  0%, 12%   { fill: var(--brand-ink); }
+  22%, 100% { fill: var(--brand-accent); }
+}
+.dk-icon-live .dk-caret { animation: dkCaret 4s cubic-bezier(.4, 0, .2, 1) infinite; }
+.dk-icon-live .dk-bar   { animation: dkLit 4s linear infinite; }
+.dk-icon-live .dk-bar-0 { animation-delay: 0s; }
+.dk-icon-live .dk-bar-1 { animation-delay: 1s; }
+.dk-icon-live .dk-bar-2 { animation-delay: 2s; }
+.dk-icon-live .dk-bar-3 { animation-delay: 3s; }
+
+@media (prefers-reduced-motion: reduce) {
+  .dk-icon-live .dk-caret,
+  .dk-icon-live .dk-bar { animation: none; }
+  .dk-icon-live .dk-bar-0 { fill: var(--brand-accent); }
+}
+
+/* ---------- footer ---------- */
+
+.dk-foot {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+  margin: 40px 0 8px;
+  padding-top: 16px;
+  border-top: 1px solid var(--border);
+  font-size: 12px;
+  color: var(--text-3);
+}
+.dk-foot-name { font-weight: 600; color: var(--text-2); }
+.dk-foot-sep { opacity: .5; }
+.dk-foot a { color: var(--text-3); text-decoration: underline; }
+.dk-foot a:hover { color: var(--accent); }

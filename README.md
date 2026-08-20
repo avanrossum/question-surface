@@ -21,9 +21,11 @@ Two modes, and they work in sequence as often as alone.
 ## Install
 
 ```bash
-pipx install docket     # or: uv tool install docket, or pip install docket
+pipx install the-docket    # or: uv tool install the-docket, or pip install
 docket setup
 ```
+
+The distribution is `the-docket`; the command it installs is `docket`.
 
 `docket setup` installs the Claude Code skill into `~/.claude/skills/` and prints the one line to add to your global `CLAUDE.md`. Without the skill an agent has no reason to reach for the tool at all.
 

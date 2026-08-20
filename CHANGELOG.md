@@ -4,6 +4,24 @@ Semver. Newest first. The tool carries its own version because questionnaires au
 
 ---
 
+## 2.3.0 — 2026-08-20
+
+### Added
+
+- **The identity, on every served page.** The mark is a margin rule with four matters beside it: the top one disposed of — gold, struck, solid marker — and three below it waiting. It appears as a lockup in the form's sidebar and the interview's header, as a favicon, and animated on completion, where the caret works down the rule clearing each matter in turn. Designed in Claude Design and imported.
+- **A footer** on both pages: the name, [mipyip.com](https://mipyip.com), the copyright, and the licence.
+
+### Changed
+
+- **The distribution is `the-docket`.** PyPI refuses plain `docket` as too close to an existing name. The import package and the command are both still `docket`, which is ordinary — pillow installs as PIL. `pipx install the-docket`, then `docket setup`.
+- The publish workflow is `docket-pypi-deploy.yml`, matching the trusted publisher on PyPI. The filename has to match exactly or authentication fails.
+- Page titles carry the product name: *"<questionnaire> — The Docket"*.
+
+### Notes
+
+- **Nothing is fetched.** The mark is inline SVG and the favicon is a data URI, because the page is served from loopback and has to render with no network at all. Its colours are the page's own tokens rather than literals, so one copy of the mark serves both themes — the sole exception is the favicon, which is a standalone document and cannot see them.
+- The animated mark is only used where a docket has just been cleared, so the motion reads as the thing it depicts rather than as decoration. `prefers-reduced-motion` parks it with the first matter marked.
+
 ## 2.2.0 — 2026-08-20
 
 ### Added

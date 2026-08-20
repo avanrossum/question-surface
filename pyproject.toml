@@ -3,7 +3,10 @@ requires = ["hatchling"]
 build-backend = "hatchling.build"
 
 [project]
-name = "docket"
+# The distribution is `the-docket`; plain `docket` is refused by PyPI as too
+# close to an existing name. The import package and the command are both still
+# `docket`, which is ordinary — pillow installs as PIL.
+name = "the-docket"
 dynamic = ["version"]
 description = "The Docket collects your coding agent's open questions into one page you clear in a sitting, and keeps the answers as a record you can commit next to the code they decided."
 readme = "README.md"
