@@ -1,4 +1,4 @@
-# Docket
+# The Docket
 
 > "Ok, you know what? Please just put all the questions you have for me in a form on an HTML page that saves the answers to a file and I'll answer them all at once."
 
@@ -8,7 +8,7 @@ That was the original request, made mid-session out of irritation at answering a
 ![python](https://img.shields.io/badge/python-3.9%2B-blue)
 ![dependencies](https://img.shields.io/badge/dependencies-none-brightgreen)
 
-Docket collects your coding agent's open questions into one page you clear in a sitting, and keeps the answers as a record you can commit next to the code they decided.
+The Docket collects your coding agent's open questions into one page you clear in a sitting, and keeps the answers as a record you can commit next to the code they decided.
 
 It builds the page on demand, serves it on loopback, and shuts down when you are done. The answers land on disk as JSON the agent reads directly, and as markdown that diffs.
 
@@ -74,7 +74,7 @@ Declining is a normal answer, and the transcript records which it was.
 
 ---
 
-## Why "Docket"?
+## Why "The Docket"?
 
 A docket is a list of matters awaiting decision, and the record of how each one was disposed of. That is what this hands you, so the name is a description rather than a label.
 

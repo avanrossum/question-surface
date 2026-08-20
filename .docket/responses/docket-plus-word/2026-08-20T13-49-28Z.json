@@ -1,0 +1,70 @@
+{
+  "questionnaire_id": "docket-plus-word",
+  "title": "Adding a word to Docket",
+  "respondent": "Alexander van Rossum",
+  "submitted_at": "2026-08-20T13:49:28Z",
+  "counts": {
+    "total": 5,
+    "answered": 4,
+    "unknown": 0,
+    "unanswered": 1,
+    "skipped": 0
+  },
+  "flagged_unknown": [],
+  "unanswered": [
+    "anything-else"
+  ],
+  "skipped": [],
+  "answers": {
+    "add-word": {
+      "prompt": "Add a word?",
+      "type": "single",
+      "value": "product-only",
+      "unknown": false,
+      "labels": [
+        "Yes — as the product name only, identifiers stay `docket`"
+      ],
+      "recommended": "product-only",
+      "followed_recommendation": true
+    },
+    "which-word": {
+      "prompt": "Which reads best to you?",
+      "type": "single",
+      "value": "the-docket",
+      "unknown": false,
+      "labels": [
+        "**The Docket**"
+      ],
+      "recommended": "the-docket",
+      "followed_recommendation": true
+    },
+    "tagline-start": {
+      "prompt": "Your consultation locked the tagline word-for-word. It currently begins *\"Docket collects your coding agent's open questions…\"* — does the new name replace that first word?",
+      "type": "single",
+      "value": "follow",
+      "unknown": false,
+      "labels": [
+        "Yes — the tagline uses the full name"
+      ],
+      "recommended": "follow",
+      "followed_recommendation": true
+    },
+    "spoken-test": {
+      "prompt": "Does a second word settle the Docker concern, or do you still want the three-developer test before the logo makes it permanent?",
+      "type": "single",
+      "value": "settled",
+      "unknown": false,
+      "labels": [
+        "Settled — a second word is enough"
+      ],
+      "recommended": "settled",
+      "followed_recommendation": true
+    },
+    "anything-else": {
+      "prompt": "Another word I have not thought of?",
+      "type": "longtext",
+      "value": null,
+      "unknown": false
+    }
+  }
+}

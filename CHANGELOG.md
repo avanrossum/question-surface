@@ -1,8 +1,20 @@
-# Changelog — Docket
+# Changelog — The Docket
 
 Semver. Newest first. The tool carries its own version because questionnaires authored against one spec format have to keep working against later ones.
 
 ---
+
+## 2.1.0 — 2026-08-20
+
+### Changed
+
+- **The product is called The Docket**, matching the naming convention already in use across The CEO, The Scribe and The Adversary. The article is doing real work: the only measurable cost of the Docker resemblance was spoken — *"check out Docket"* answered with *"Docker?"* — and no two-word phrase gets misheard as one familiar word. Written and searched were never affected, since the tagline travels beside the name by policy and nobody finds a tool by searching its name.
+- **The tagline follows the name**: *The Docket collects your coding agent's open questions into one page you clear in a sitting, and keeps the answers as a record you can commit next to the code they decided.* Still locked word-for-word across the repo description, the skill description, the README's opening line and the install banner.
+
+### Not changed
+
+- **Every identifier.** The command is still `docket`, the repository is still `avanrossum/docket`, the package is still `docket/`, the project directory is still `.docket/`, and the PyPI name is still `docket`. A product name and its command routinely differ — Docker Desktop and `docker` — so this is prose, not a migration, and nothing installed needs to move.
+- The v2.0.0 changelog entry and the roadmap's shipped record keep saying "Docket", because that is the name that shipped that day.
 
 ## 2.0.0 — 2026-08-17
 

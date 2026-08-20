@@ -1,9 +1,9 @@
 ---
 name: docket
-description: Docket collects your coding agent's open questions into one page you clear in a sitting, and keeps the answers as a record you can commit next to the code they decided. Collect answers from the user through a local web surface instead of asking serially in chat. Two modes. Batch form — whenever a task needs decisions, requirements, or clarifications: architecture forks, scoping, discovery, requirements gathering, keep-vs-drop inventories, or any point where you are about to write a numbered list of questions into a chat message; also for fewer questions when the answers would benefit from real exposition, detailed answer choices, or open-ended interaction; mandatory at the configured gate, default five. Interview mode — whenever the user asks to be interviewed, or when each answer should determine the next question: drawing out material for writing, working through an architecture or systems-design problem, or thinking through a complex problem out loud. Covers authoring, serving, conducting, and consuming the answers.
+description: The Docket collects your coding agent's open questions into one page you clear in a sitting, and keeps the answers as a record you can commit next to the code they decided. Collect answers from the user through a local web surface instead of asking serially in chat. Two modes. Batch form — whenever a task needs decisions, requirements, or clarifications: architecture forks, scoping, discovery, requirements gathering, keep-vs-drop inventories, or any point where you are about to write a numbered list of questions into a chat message; also for fewer questions when the answers would benefit from real exposition, detailed answer choices, or open-ended interaction; mandatory at the configured gate, default five. Interview mode — whenever the user asks to be interviewed, or when each answer should determine the next question: drawing out material for writing, working through an architecture or systems-design problem, or thinking through a complex problem out loud. Covers authoring, serving, conducting, and consuming the answers.
 ---
 
-# Docket — batch question collection
+# The Docket — batch question collection
 
 **Two triggers, either one is sufficient:**
 

@@ -1,10 +1,10 @@
-# Docket
+# The Docket
 
 A local web form for collecting answers to a batch of questions in one pass. Standard-library Python, no dependencies, no build step. `README.md` is the format reference; `ROADMAP.md` records what was deliberately left out and why.
 
 ## Asking the user questions (governed)
 
-**Five or more questions go through Docket, and so does any smaller number whose answers would benefit from exposition, detailed answer choices, or open-ended interaction.** The workflow, the authoring quality bar, and the spec format are in the **`docket` skill** (`.claude/skills/docket/`).
+**Five or more questions go through The Docket, and so does any smaller number whose answers would benefit from exposition, detailed answer choices, or open-ended interaction.** The workflow, the authoring quality bar, and the spec format are in the **`docket` skill** (`.claude/skills/docket/`).
 
 A long or dense question set asked serially in chat degrades predictably: each answer arrives without the others in view, so the tradeoffs between them are invisible; later questions get shorter answers than early ones; conditional follow-ups arrive after the context that made them meaningful is gone; and the answers scatter across a transcript nobody re-reads, so the next session re-derives half of them. Collecting the set at once removes all of that and leaves a durable artifact — a tracked questionnaire and a tracked response — instead of a transcript.
 

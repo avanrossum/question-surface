@@ -1,0 +1,118 @@
+{
+  "id": "docket-plus-word",
+  "title": "Adding a word to Docket",
+  "intro": "You asked what happens if a word gets added to expand what the name says. Short answer: at the product level it is nearly free, and it fixes the one real cost of the Docker resemblance.\n\n**Nothing breaks.** The command stays `docket`, the repo stays `avanrossum/docket`, the package stays `docket/`, the state directory stays `.docket/`, and PyPI stays `docket`. A product name and its command routinely differ — Docker Desktop and `docker`, The Scribe and its binary, your own Access Control Ledger and `haggai-acl`.\n\nWhat changes is prose: five markdown files, the skill description, the install banner, and the repo description. Fifteen minutes, no version break.",
+  "context_docs": [
+    ".docket/responses/rename-docket/ — the rename that just shipped",
+    "~/Developer/The_CEO/consultations/question-surface/DECISION.md"
+  ],
+  "sections": [
+    {
+      "title": "Whether",
+      "questions": [
+        {
+          "type": "info",
+          "prompt": "Recall where the Docker resemblance actually costs anything. **Written** is fine — the tagline sits beside the name everywhere by policy. **Searched** barely matters, since nobody finds this by searching the name; they search the problem. **Spoken** is the real one: *\"check out Docket\"* → *\"Docker?\"* → *\"no, with a T.\"* A second word kills that, because no two-word phrase gets misheard as a single familiar one."
+        },
+        {
+          "id": "add-word",
+          "type": "single",
+          "prompt": "Add a word?",
+          "why": "This decides whether we spend fifteen minutes on prose or nothing at all. It also decides whether the identifiers stay put — my recommendation keeps every one of them, so there is no second rename and no 3.0.0.",
+          "required": true,
+          "recommend": "product-only",
+          "options": [
+            {
+              "value": "product-only",
+              "label": "Yes — as the product name only, identifiers stay `docket`",
+              "detail": "The written name gains a word; the command, repo, package, state directory and PyPI name do not move. No breaking change, no new major version, and the spoken collision goes away. This is the cheap version of everything you would want from it."
+            },
+            {
+              "value": "everything",
+              "label": "Yes — and the identifiers follow too",
+              "detail": "A hyphenated command and repo. Cost: a second breaking rename three days after the first, and your consultation's specific objection that a hyphenated compound reads as an internal script rather than a project."
+            },
+            {
+              "value": "no",
+              "label": "No — Docket alone, with the tagline always beside it",
+              "detail": "The status quo. The tagline lock already does the disambiguation everywhere the name is written. Cost: the spoken tax stays, permanently and forever small."
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "title": "Which word",
+      "intro": "All four keep `docket` as the command. Availability checked just now.",
+      "questions": [
+        {
+          "id": "which-word",
+          "type": "single",
+          "prompt": "Which reads best to you?",
+          "why": "The added word does two jobs, and the candidates trade between them: breaking the Docker resemblance when spoken, and saying more about what the thing is. One of them also happens to match the naming convention you already use across your own tools.",
+          "show_if": { "question": "add-word", "not_equals": "no" },
+          "recommend": "the-docket",
+          "options": [
+            {
+              "value": "the-docket",
+              "label": "**The Docket**",
+              "detail": "Matches your house style exactly — The CEO, The Scribe, The Adversary. The article changes the prosody enough that it stops sounding like Docker, and it costs nothing to say. Against it: it adds no meaning, so someone who does not know the word still does not. 28 repos share the name, top one at 1 star."
+            },
+            {
+              "value": "decision-docket",
+              "label": "**Decision Docket**",
+              "detail": "Says exactly what is on it, which is the thing the rename was for. **Zero repositories** have this in their name — the cleanest namespace of the four. Against it: two heavy words, faintly consultant-ish, and it does not match your house style."
+            },
+            {
+              "value": "agent-docket",
+              "label": "**Agent Docket**",
+              "detail": "Names the novelty directly: an agent files the matters, you dispose of them. Against it: *agent* is the most overloaded word in tooling right now and will date the name to 2026 within a year."
+            },
+            {
+              "value": "open-docket",
+              "label": "**Open Docket**",
+              "detail": "An open docket is one with matters still pending, which is exactly the state the tool represents. Against it: searching it still surfaces Docketeer, an 881-star Docker tool — it keeps some of the collision it exists to remove."
+            }
+          ]
+        },
+        {
+          "id": "tagline-start",
+          "type": "single",
+          "prompt": "Your consultation locked the tagline word-for-word. It currently begins *\"Docket collects your coding agent's open questions…\"* — does the new name replace that first word?",
+          "why": "The lock exists so the name never travels without its explanation. If the product name grows and the tagline does not follow, the two disagree in the exact places the lock was meant to make consistent.",
+          "show_if": { "question": "add-word", "not_equals": "no" },
+          "recommend": "follow",
+          "options": [
+            { "value": "follow", "label": "Yes — the tagline uses the full name", "detail": "One name everywhere, including its own sentence." },
+            { "value": "keep-short", "label": "No — the tagline keeps saying \"Docket\"", "detail": "Shorter sentence, and it matches the command. Cost: the product is introduced by a name its own tagline does not use." }
+          ]
+        }
+      ]
+    },
+    {
+      "title": "The test",
+      "questions": [
+        {
+          "id": "spoken-test",
+          "type": "single",
+          "prompt": "Does a second word settle the Docker concern, or do you still want the three-developer test before the logo makes it permanent?",
+          "why": "Your consultation made this an empirical test precisely because argument cannot settle it. If a second word removes the concern, the test is moot; if you are still uneasy, thirty minutes now beats a third rename later.",
+          "recommend": "settled",
+          "options": [
+            { "value": "settled", "label": "Settled — a second word is enough", "detail": "Proceed to the logo on the chosen name." },
+            { "value": "still-test", "label": "Still run the test", "detail": "Say it out loud to three people first. I will hold the logo brief until you report back." },
+            { "value": "reopen", "label": "Not settled — reconsider the name entirely", "detail": "`onrecord` is still held in reserve, and I would rather hear that now than after a logo exists." }
+          ]
+        },
+        {
+          "id": "anything-else",
+          "type": "longtext",
+          "prompt": "Another word I have not thought of?",
+          "why": "The four above are mine. If something has been sitting in your head since you asked the question, it beats anything I generated.",
+          "placeholder": "Free text — or leave blank",
+          "allow_unknown": false
+        }
+      ]
+    }
+  ]
+}

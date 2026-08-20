@@ -9,4 +9,4 @@ in a form an agent reads directly.
 Entry point is `docket.py` at the project root.
 """
 
-__version__ = "2.0.0"
+__version__ = "2.1.0"

@@ -80,7 +80,7 @@ strip_pointer() {
 # ---------------------------------------------------------------- uninstall --
 
 if [ "$UNINSTALL" = "1" ]; then
-  step "Removing Docket"
+  step "Removing The Docket"
   [ -L "$BIN_LINK" ]   && { rm -f "$BIN_LINK";   say "removed $BIN_LINK"; }   || say "no CLI link"
   [ -L "$SKILL_LINK" ] && { rm -f "$SKILL_LINK"; say "removed $SKILL_LINK"; } || say "no skill link"
   if [ -f "$CLAUDE_MD" ] && grep -q "$BEGIN_MARK" "$CLAUDE_MD"; then
@@ -99,10 +99,10 @@ fi
 
 # ------------------------------------------------------------------ install --
 
-step "Docket — installing from $ROOT"
-say "Docket collects your coding agent's open questions into one page you clear"
-say "in a sitting, and keeps the answers as a record you can commit next to the"
-say "code they decided."
+step "The Docket — installing from $ROOT"
+say "The Docket collects your coding agent's open questions into one page you"
+say "clear in a sitting, and keeps the answers as a record you can commit next"
+say "to the code they decided."
 
 if ! command -v python3 >/dev/null 2>&1; then
   echo "  python3 is required and was not found on PATH" >&2
